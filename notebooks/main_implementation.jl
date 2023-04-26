@@ -51,22 +51,25 @@ md"""
 """
 
 # ╔═╡ 7d2d39f5-5c2b-485b-a868-bf102b95a1ea
-const GEOTABLE = let
+const GEOTABLE = Ref{GeoTables.GeoTable}()
+
+# ╔═╡ 608b1bf9-cc74-4728-84b6-ac415b30ef56
+# ╠═╡ skip_as_script = true
+#=╠═╡
+GEOTABLE[] = let
 	shapefile = joinpath(dirname(Base.current_project()), "assets", "ne_110m_admin_0_countries_lakes.shp")
 	GeoTables.load(shapefile)
 end
+  ╠═╡ =#
 
-# ╔═╡ 6053d75a-4e1e-4bcf-8091-cf6abd1506f4
-const SHAPETABLE = getfield(GEOTABLE,:table)
-
-# ╔═╡ 9de34566-654f-4e65-b758-ba66a018a3b2
-const COLUMN_NAMES = setdiff(Tables.columnnames(SHAPETABLE), [:geometry, :featurecla, :scalerank])
+# ╔═╡ 74882051-3a5d-4b69-8078-e1fa0487d7e2
+valid_column_names() = setdiff(Tables.columnnames(GEOTABLE[]), [:geometry, :featurecla, :scalerank])
 
 # ╔═╡ aefe938e-601e-481b-bce4-0cf66e4b002b
-const POSSIBLE_SELECTORS = let
+possible_selector_values() = let
 	f(s) = replace(s, "\0" => "")
 	fields = (:ADMIN, :CONTINENT, :REGION_UN, :SUBREGION, :REGION_WB)
-	NamedTuple((k => unique(map(f,getproperty(SHAPETABLE, k))) for k in fields))
+	NamedTuple((k => unique(map(f,getproperty(GEOTABLE[], k))) for k in fields))
 end
 
 # ╔═╡ ed9e1b7e-5b97-46c9-90fa-0d72a9c2f777
@@ -106,7 +109,7 @@ For a list of possible column names, check the variable `CountriesBorders.COLUMN
 
 For a list of the possible values contained in the table for some of the most useful colulmn names, have a look at `CountriesBorders.POSSIBLE_VALUES`.
 """
-function extract_countries(shapetable::GeoTables.SHP.Table = SHAPETABLE;kwargs...)
+function extract_countries(shapetable::GeoTables.SHP.Table;kwargs...)
 	subset = Tables.subset(shapetable, 1:length(shapetable))
 	for (k, v) in kwargs
 		key = Symbol(uppercase(string(k)))
@@ -124,7 +127,9 @@ function extract_countries(shapetable::GeoTables.SHP.Table = SHAPETABLE;kwargs..
 	Meshes.Collection(items)
 end
 
-# Method that just 
+extract_countries(geotable::GeoTables.GeoTable = GEOTABLE[];kwargs...) = extract_countries(getfield(geotable, :table); kwargs...)
+
+# Method that just searches the admin column
 extract_countries(name::Union{Regex, String};kwargs...) = extract_countries(;admin = name, kwargs...)
 end
 
@@ -1152,8 +1157,8 @@ version = "1.1.9+1"
 # ╟─cd86eea8-64e0-4d47-a1be-7fd09bdd7ea1
 # ╟─e53d981a-ebd2-4e0b-b3ae-6428851b5924
 # ╠═7d2d39f5-5c2b-485b-a868-bf102b95a1ea
-# ╠═6053d75a-4e1e-4bcf-8091-cf6abd1506f4
-# ╠═9de34566-654f-4e65-b758-ba66a018a3b2
+# ╠═608b1bf9-cc74-4728-84b6-ac415b30ef56
+# ╠═74882051-3a5d-4b69-8078-e1fa0487d7e2
 # ╠═aefe938e-601e-481b-bce4-0cf66e4b002b
 # ╟─ed9e1b7e-5b97-46c9-90fa-0d72a9c2f777
 # ╟─333dd8a2-50e7-4f84-9b0f-48adcd0b586c

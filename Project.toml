@@ -1,7 +1,7 @@
 name = "CountriesBorders"
 uuid = "ee40d4b5-31c3-4fe2-b6cc-5ac7adf7f414"
 authors = ["Alberto Mengali <disberd@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
