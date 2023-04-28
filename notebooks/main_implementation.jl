@@ -194,7 +194,19 @@ end
 
 # ╔═╡ 40f1e8cb-fb28-4f3d-9731-ea1eb68d2a18
 #=╠═╡
-plot(scattergeo(extract_countries(;subregion = "southern europe")))
+let
+	domain = extract_countries(;subregion = "southern europe")
+	grid = [(lon, lat) for lon in -180:180, lat in -90:90]
+	valid = map(grid) do p
+		Meshes.Point{2, Float64}(p) in domain
+	end
+	lon = first.(grid[valid])
+	lat = last.(grid[valid])
+	plot([
+		scattergeo(domain),
+		scattergeo(;lat, lon)
+	])
+end
   ╠═╡ =#
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
