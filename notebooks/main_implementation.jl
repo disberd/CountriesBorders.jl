@@ -88,27 +88,48 @@ begin
 	extract_countries([shapetable::Shapefile.Table]; kwargs...)
 	extract_countries(name::Union{Regex, String}; kwargs...)
 
-Extract and returns the domain (`<:Meshes.Domain`) containing all the countries that match a search query provided via the kwargs...
+Extract and returns the domain (`<:Meshes.Domain`) containing all the countries
+that match a search query provided via the kwargs...
 
-The returned `domain` can be used to check inclusion of `Meshes.Point` objects or can be directly plotted using `scattergeo` from PlotlyBase and the dependent packages (e.g. PlutoPlotly, PlotlyJS)
+The returned `domain` can be used to check inclusion of `Meshes.Point` objects
+or can be directly plotted using `scattergeo` from PlotlyBase and the dependent
+packages (e.g. PlutoPlotly, PlotlyJS)
 
-The function can take as input a custom `shapetable` but it's usually simply called without one, in which case it uses the one loaded by default by the package, which is obtained from the 1/110m maps from [naturalearthdata.com](https://www.naturalearthdata.com/). 
-Specifically, the shape file used to obtain the coordinates of the countries borders is located at [https://github.com/nvkelso/natural-earth-vector/blob/master/110m_cultural/ne_110m_admin_0_countries_lakes.shp](https://github.com/nvkelso/natural-earth-vector/blob/master/110m_cultural/ne_110m_admin_0_countries_lakes.shp).
+The function can take as input a custom `shapetable` but it's usually simply
+called without one, in which case it uses the one loaded by default by the
+package, which is obtained from the 1/110m maps from
+[naturalearthdata.com](https://www.naturalearthdata.com/).  Specifically, the
+shape file used to obtain the coordinates of the countries borders is located at
+[https://github.com/nvkelso/natural-earth-vector/blob/master/110m_cultural/ne_110m_admin_0_countries_lakes.shp](https://github.com/nvkelso/natural-earth-vector/blob/master/110m_cultural/ne_110m_admin_0_countries_lakes.shp).
 
-The `shapetable` contains a row per country and various country-related informations among the columns
+The `shapetable` contains a row per country and various country-related
+informations among the columns
 
-The downselection of countries to form a domain is performed by passing keyword arguments containing either `String` or `Regex` values. 
-The function iterates over each kwarg and tries to find all rows that match the provided String or Regex within the column name corresponding to the kwarg name.
+The downselection of countries to form a domain is performed by passing keyword
+arguments containing either `String` or `Regex` values.  The function iterates
+over each kwarg and tries to find all rows that match the provided String or
+Regex within the column name corresponding to the kwarg name.  Each successive
+kwarg further downselects the list of countries satisfying the previous kwarg
+condition.
 
-For example, the following call `extract_countries(;CONTINENT = r"Europe")` is simply finding each row of `shapefile` for which `match(row.CONTINENT, r"Europe")` returns a valid match.
+For example, the following call `extract_countries(;CONTINENT = r"Europe")` is
+simply finding each row of `shapefile` for which `match(row.CONTINENT,
+r"Europe")` returns a valid match.
 
-If kwarg values are provided as String instead of Regex, the function internally translates them into _case-insensitive_ `Regex` before performing the match.
+If kwarg values are provided as String instead of Regex, the function internally
+translates them into _case-insensitive_ `Regex` before performing the match.
 
-All the column names of the default `shapefile` are uppercase, but the functionaly automatically transforms the kwarg name to uppercase before accessing the column so you could also write the previous command as `extract_countries(;continent = r"Europe")`.
+All the column names of the default `shapefile` are uppercase, but the
+functionaly automatically transforms the kwarg name to uppercase before
+accessing the column so you could also write the previous command as
+`extract_countries(;continent = r"Europe")`.
 
-For a list of possible column names, call the function `CountriesBorders.valid_column_names()`.
+For a list of possible column names, call the function
+`CountriesBorders.valid_column_names()`.
 
-For a list of the possible values contained in the table for some of the most useful colulmn names, call the function `CountriesBorders.possible_selector_values()`.
+For a list of the possible values contained in the table for some of the most
+useful colulmn names, call the function
+`CountriesBorders.possible_selector_values()`.
 """
 function extract_countries(shapetable::GeoTables.SHP.Table;kwargs...)
 	subset = Tables.subset(shapetable, 1:length(shapetable))
