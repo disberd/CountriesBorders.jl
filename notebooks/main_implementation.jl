@@ -124,8 +124,7 @@ function extract_countries(shapetable::GeoTables.SHP.Table;kwargs...)
 		isempty(idx) && return # We don't have any match
 		subset = Tables.subset(subset, idx)
 	end
-	items = GeoTables.geom2meshes.(subset.geometry)
-	Meshes.Collection(items)
+	domain(GeoTables.GeoTable(subset))
 end
 
 extract_countries(geotable::GeoTables.GeoTable = GEOTABLE[];kwargs...) = extract_countries(getfield(geotable, :table); kwargs...)
