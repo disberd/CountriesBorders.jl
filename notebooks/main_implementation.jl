@@ -82,6 +82,16 @@ md"""
 ## Extract countries
 """
 
+# ╔═╡ 8dfbd84b-5460-47e8-a431-d1f1f9ac0238
+begin
+	# Make a case-insensitive regexp from a string
+	_to_regexp(s::String) = Regex(s, 0x040a000a, 0x40000000)
+	_to_regexp(r::Regex) = r
+	# Transforms string or regexps in a vector of regexps
+	_process_input(s::Union{String, Regex}) = [_to_regexp(s)]
+	_process_input(v::Array) = map(_to_regexp, v)
+end
+
 # ╔═╡ a6f4541c-5531-4e88-a8b0-200a7434e316
 begin
 """
@@ -135,13 +145,18 @@ function extract_countries(shapetable::GeoTables.SHP.Table;kwargs...)
 	subset = Tables.subset(shapetable, 1:length(shapetable))
 	for (k, v) in kwargs
 		key = Symbol(uppercase(string(k)))
-		v isa Union{Regex, String} || error("The kwarg values have to be provided as String or Regex")
-		# The options for creating the regex makes it case insensitive
-		regex = v isa String ? Regex(v, 0x040a000a, 0x40000000) : v
-		col_vals = map(getproperty(shapetable, key)) do str
-			match(regex, str) !== nothing
+		r_vec = try
+			_process_input(v)
+		catch
+			error("The kwarg values have to be provided as String or Regex or Arrays of the two")
 		end
-		idx = findall(col_vals)
+		flag_vec = falses(Tables.rowcount(subset))
+		for regex in r_vec
+			flag_vec .+= col_vals = map(getproperty(subset, key)) do str
+				match(regex, str) !== nothing
+			end
+		end
+		idx = findall(flag_vec)
 		isempty(idx) && return # We don't have any match
 		subset = Tables.subset(subset, idx)
 	end
@@ -1195,6 +1210,7 @@ version = "1.1.9+1"
 # ╠═aefe938e-601e-481b-bce4-0cf66e4b002b
 # ╟─ed9e1b7e-5b97-46c9-90fa-0d72a9c2f777
 # ╟─333dd8a2-50e7-4f84-9b0f-48adcd0b586c
+# ╠═8dfbd84b-5460-47e8-a431-d1f1f9ac0238
 # ╠═a6f4541c-5531-4e88-a8b0-200a7434e316
 # ╠═ba51fc30-93f2-4243-8970-3d1fe94ea7af
 # ╠═16b297fc-c113-4780-9235-5bc87ae87f6d
