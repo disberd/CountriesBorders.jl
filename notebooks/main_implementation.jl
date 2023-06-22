@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.24
+# v0.19.26
 
 #> custom_attrs = ["hide-enabled"]
 
@@ -62,6 +62,14 @@ GEOTABLE[] = let
 end
   ╠═╡ =#
 
+# ╔═╡ b1decf32-a337-44fe-878b-4427c6d0cfb7
+# ╠═╡ skip_as_script = true
+#=╠═╡
+html"""
+<iframe src='https://public.opendatasoft.com/explore/dataset/natural-earth-countries-1_110m/table/' style='width: 100%; height:800px;'>
+"""
+  ╠═╡ =#
+
 # ╔═╡ 74882051-3a5d-4b69-8078-e1fa0487d7e2
 valid_column_names() = setdiff(Tables.columnnames(getfield(GEOTABLE[], :table)), [:geometry, :featurecla, :scalerank])
 
@@ -71,6 +79,18 @@ possible_selector_values() = let
 	fields = (:ADMIN, :CONTINENT, :REGION_UN, :SUBREGION, :REGION_WB)
 	NamedTuple((k => unique(map(f,getproperty(GEOTABLE[], k))) for k in fields))
 end
+
+# ╔═╡ f4142d94-b502-49e8-a386-c0f338839b79
+# ╠═╡ skip_as_script = true
+#=╠═╡
+possible_selector_values()
+  ╠═╡ =#
+
+# ╔═╡ 029a1492-caca-426d-9c28-ae09bfe6658e
+# ╠═╡ skip_as_script = true
+#=╠═╡
+valid_column_names()
+  ╠═╡ =#
 
 # ╔═╡ ed9e1b7e-5b97-46c9-90fa-0d72a9c2f777
 md"""
@@ -85,18 +105,33 @@ md"""
 # ╔═╡ 8dfbd84b-5460-47e8-a431-d1f1f9ac0238
 begin
 	# Make a case-insensitive regexp from a string
-	_to_regexp(s::String) = Regex(s, 0x040a000a, 0x40000000)
-	_to_regexp(r::Regex) = r
+	function _to_regexp(s::AbstractString)
+		s = strip(s)
+		minus_flag, pattern = if startswith(s, "-")
+			true, s[2:end]
+		else
+			pattern = startswith(s, "+") ? s[2:end] : s
+			false, pattern
+		end
+		pattern = replace(pattern, "*" => "[\\w\\s]*")
+		pattern = "^$pattern\$"
+		return minus_flag, Regex(pattern, 0x040a000a, 0x40000000)
+	end
+	_to_regexp(r::Regex) = error("This function does not support Regex as input anymore")
 	# Transforms string or regexps in a vector of regexps
-	_process_input(s::Union{String, Regex}) = [_to_regexp(s)]
-	_process_input(v::Array) = map(_to_regexp, v)
+	function _process_input(s::String)
+		# Try to see if there are multiple inputs (separated by ;)
+		inputs = filter(!isempty,split(s,";"))
+		map(_to_regexp, inputs)
+	end
+	_process_input(v::Array) = vcat(map(_process_input, v)...)
 end
 
 # ╔═╡ a6f4541c-5531-4e88-a8b0-200a7434e316
 begin
 """
 	extract_countries([shapetable::Shapefile.Table]; kwargs...)
-	extract_countries(name::Union{Regex, String}; kwargs...)
+	extract_countries(name::String; kwargs...)
 
 Extract and returns the domain (`<:Meshes.Domain`) containing all the countries
 that match a search query provided via the kwargs...
@@ -116,23 +151,24 @@ The `shapetable` contains a row per country and various country-related
 informations among the columns
 
 The downselection of countries to form a domain is performed by passing keyword
-arguments containing either `String` or `Regex` values.  The function iterates
-over each kwarg and tries to find all rows that match the provided String or
-Regex within the column name corresponding to the kwarg name.  Each successive
-kwarg further downselects the list of countries satisfying the previous kwarg
-condition.
+arguments containing `String` or `Vector{String}` values. 
 
-For example, the following call `extract_countries(;CONTINENT = r"Europe")` is
-simply finding each row of `shapefile` for which `match(row.CONTINENT,
-r"Europe")` returns a valid match.
+# Input Parsing
 
-If kwarg values are provided as String instead of Regex, the function internally
-translates them into _case-insensitive_ `Regex` before performing the match.
+For each keyword argument, the function performs a downselection on the `shapetable` column whose name matches the keyword argument name. The downselection is done based on the string provided as value:
+- The string is used to match the full name (case-insensitive) with the value of the specified column for each row of the table. 
+- The `*` wildcard can be used within the string to expand to any number of word or space characters.
+- If the string starts with the '-' character, all rows that match are removed from the current downselection. Otherwise, the matching rows are added to the downselection (One can also put a '+' in front of the string to use for the matching to emphasise addition rather than deletion).
+- Multiple query/match strings can also be provided for each keyword argument, either as a vector of strings or within the same string but separated by ';'
+  - The multiple queries are processed in the order they are provided, adding or removing to the total downselection accordingly
+- Each keyword argument is processed in the order it was provided, also modifying the downselection as described in the previous points.
+- The name of the keyword argument is made all uppercase before matching with the column names of `shapefile`, as the column names for the default table are all uppercase, so calling `extract_countries(;ConTinEnt = "Asia")` will match against the `:CONTINENT` column of the `shapefile`.
 
-All the column names of the default `shapefile` are uppercase, but the
-functionaly automatically transforms the kwarg name to uppercase before
-accessing the column so you could also write the previous command as
-`extract_countries(;continent = r"Europe")`.
+## Parsing Examples
+
+- `extract_countries(;continent = "europe", admin="-russia")` will extract the borders of all countries within the european continent except Russia
+- `extract_countries(;admin="-russia", continent = "europe")` will extract the borders of all countries within the european continent **including** Russia. This is because the strings are processed in order, so Russia is first removed and then Europe (which includes Russia) is added.
+- `extract_countries(;subregion = "*europe; -eastern europe")` will extract all countries that have a `subregion` name ending with `europe` (That is northern, eastern, western and southern) but will not include countries within the `eastern europe` subregion.
 
 For a list of possible column names, call the function
 `CountriesBorders.valid_column_names()`.
@@ -142,7 +178,7 @@ useful colulmn names, call the function
 `CountriesBorders.possible_selector_values()`.
 """
 function extract_countries(shapetable::GeoTables.SHP.Table;kwargs...)
-	subset = Tables.subset(shapetable, 1:length(shapetable))
+	downselection = falses(Tables.rowcount(shapetable))
 	for (k, v) in kwargs
 		key = Symbol(uppercase(string(k)))
 		r_vec = try
@@ -150,23 +186,25 @@ function extract_countries(shapetable::GeoTables.SHP.Table;kwargs...)
 		catch
 			error("The kwarg values have to be provided as String or Regex or Arrays of the two")
 		end
-		flag_vec = falses(Tables.rowcount(subset))
-		for regex in r_vec
-			flag_vec .+= col_vals = map(getproperty(subset, key)) do str
-				match(regex, str) !== nothing
+		for (remove_from_list, regex) in r_vec
+			col_vals = map(getproperty(shapetable, key)) do str
+				match(regex, replace(str, "\0" => "")) !== nothing
 			end
+			downselection[col_vals] .= remove_from_list ? false : true
 		end
-		idx = findall(flag_vec)
-		isempty(idx) && return # We don't have any match
-		subset = Tables.subset(subset, idx)
 	end
-	domain(GeoTables.GeoTable(subset))
+	if any(downselection)
+		subset = Tables.subset(shapetable, downselection)
+		return domain(GeoTables.GeoTable(subset))
+	else
+		return nothing
+	end
 end
 
 extract_countries(geotable::GeoTables.GeoTable = GEOTABLE[];kwargs...) = extract_countries(getfield(geotable, :table); kwargs...)
 
 # Method that just searches the admin column
-extract_countries(name::Union{Regex, String};kwargs...) = extract_countries(;admin = name, kwargs...)
+extract_countries(name::AbstractString;kwargs...) = extract_countries(;admin = name, kwargs...)
 end
 
 # ╔═╡ ba3c6a17-f21c-44e7-bf62-f2aff8f84417
@@ -207,10 +245,27 @@ function PlotlyBase.scattergeo(p::Union{Multi, Domain, Polygon}; kwargs...)
 	scattergeo(; lat, lon, mode="lines", kwargs...)
 end
 
-# ╔═╡ 40f1e8cb-fb28-4f3d-9731-ea1eb68d2a18
+# ╔═╡ 3c4699fb-c7dd-47a9-ac8c-9a0700a4aae7
 #=╠═╡
 let
-	domain = extract_countries(;subregion = "southern europe")
+	domain = extract_countries(;subregion = "*europe; -eastern europe")
+	grid = [(lon, lat) for lon in -180:180, lat in -90:90]
+	valid = map(grid) do p
+		Meshes.Point{2, Float64}(p) in domain
+	end
+	lon = first.(grid[valid])
+	lat = last.(grid[valid])
+	plot([
+		scattergeo(domain),
+		scattergeo(;lat, lon)
+	])
+end
+  ╠═╡ =#
+
+# ╔═╡ 2f9cea97-8b5c-4593-9d11-f0d028b2f723
+#=╠═╡
+let
+	domain = extract_countries(;subregion = "*europe", admin = "-russia")
 	grid = [(lon, lat) for lon in -180:180, lat in -90:90]
 	valid = map(grid) do p
 		Meshes.Point{2, Float64}(p) in domain
@@ -251,9 +306,9 @@ Tables = "~1.10.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-rc2"
+julia_version = "1.9.1"
 manifest_format = "2.0"
-project_hash = "eb867e4004b6b76edd772561e4741cb1f015e3f3"
+project_hash = "04dcfeec8010ef46d04d2ae757a6b34c578ca1b0"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1164,7 +1219,7 @@ version = "1.76.0+1"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.4.0+0"
+version = "5.8.0+0"
 
 [[deps.libgeotiff_jll]]
 deps = ["Artifacts", "JLLWrappers", "LibCURL_jll", "Libdl", "Libtiff_jll", "PROJ_jll", "Pkg"]
@@ -1206,8 +1261,11 @@ version = "1.1.9+1"
 # ╟─e53d981a-ebd2-4e0b-b3ae-6428851b5924
 # ╠═7d2d39f5-5c2b-485b-a868-bf102b95a1ea
 # ╠═608b1bf9-cc74-4728-84b6-ac415b30ef56
+# ╟─b1decf32-a337-44fe-878b-4427c6d0cfb7
 # ╠═74882051-3a5d-4b69-8078-e1fa0487d7e2
 # ╠═aefe938e-601e-481b-bce4-0cf66e4b002b
+# ╠═f4142d94-b502-49e8-a386-c0f338839b79
+# ╠═029a1492-caca-426d-9c28-ae09bfe6658e
 # ╟─ed9e1b7e-5b97-46c9-90fa-0d72a9c2f777
 # ╟─333dd8a2-50e7-4f84-9b0f-48adcd0b586c
 # ╠═8dfbd84b-5460-47e8-a431-d1f1f9ac0238
@@ -1217,6 +1275,7 @@ version = "1.1.9+1"
 # ╠═f0c26f77-b6fe-43c5-806b-18b680ec7e0e
 # ╠═8a175bb5-20c2-4b4f-bf09-0f3d21c6c8b1
 # ╠═14091a0b-f5a2-4932-93d1-aec077ae68f5
-# ╠═40f1e8cb-fb28-4f3d-9731-ea1eb68d2a18
+# ╠═3c4699fb-c7dd-47a9-ac8c-9a0700a4aae7
+# ╠═2f9cea97-8b5c-4593-9d11-f0d028b2f723
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
