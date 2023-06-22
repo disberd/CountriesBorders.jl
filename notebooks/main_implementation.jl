@@ -63,7 +63,7 @@ end
   ╠═╡ =#
 
 # ╔═╡ 74882051-3a5d-4b69-8078-e1fa0487d7e2
-valid_column_names() = setdiff(Tables.columnnames(GEOTABLE[]), [:geometry, :featurecla, :scalerank])
+valid_column_names() = setdiff(Tables.columnnames(getfield(GEOTABLE[], :table)), [:geometry, :featurecla, :scalerank])
 
 # ╔═╡ aefe938e-601e-481b-bce4-0cf66e4b002b
 possible_selector_values() = let
