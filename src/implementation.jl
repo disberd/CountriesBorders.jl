@@ -134,7 +134,7 @@ function extract_countries(shapetable::GeoTables.SHP.Table; skip_areas = nothing
 		r_vec = try
 			_process_input(v)
 		catch
-			error("The kwarg values have to be provided as String or Regex or Arrays of the two")
+			error("The kwarg values have to be provided as String or Vector{String}")
 		end
 		for (remove_from_list, regex) in r_vec
 			col_vals = map(getproperty(shapetable, key)) do str

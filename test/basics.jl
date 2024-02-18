@@ -39,3 +39,11 @@ example3 = extract_countries(;subregion = "*europe; -eastern europe")
     @test all(in(dmn_full), included_cities)
     @test all(in(dmn_full), excluded_cities)
 end
+
+# We test the array method
+dm1 = extract_countries("italy; spain; france; norway")
+dm2 = extract_countries(["italy","spain","france","norway"])
+@test length(dm1) == length(dm2)
+
+# We test that sending a regex throws
+@test_throws "Vector{String}" extract_countries(; admin = r"france")
