@@ -5,10 +5,11 @@ using Meshes
 using GeoInterface
 using Tables
 
-export extract_countries
+export extract_countries, SKIP_NONCONTINENTAL_EU, SkipFromAdmin
 
 const GEOTABLE = Ref{GeoTables.GeoTable}()
 
+include("skip_polyarea.jl")
 include("implementation.jl")
 
 function __init__()
