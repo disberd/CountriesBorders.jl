@@ -1,4 +1,5 @@
 using CountriesBorders
+using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict
 using Meshes
 
 example1 = extract_countries(;continent = "europe", admin="-russia")
@@ -47,3 +48,30 @@ dm2 = extract_countries(["italy","spain","france","norway"])
 
 # We test that sending a regex throws
 @test_throws "Vector{String}" extract_countries(; admin = r"france")
+
+# we do coverage for possible_selector_values and valid_column_names
+possible_selector_values()
+valid_column_names()
+
+# skip_polyarea coverage
+sfa1 = SkipFromAdmin("France", :)
+sfa2 = SkipFromAdmin("France", 1)
+sd = mergeSkipDict([
+    sfa1
+    sfa2
+])
+
+@test sfa1 |> skipall # France should be skipall
+@test !skipall(sfa2)
+@test sd["France"] |> skipall # The merge should have kept the skipall
+
+validate_skipDict(sd) # Check it doesn't error
+@test_throws "more than one row" validate_skipDict(skipDict(("A", :)))
+@test_throws "no match" validate_skipDict(skipDict(("Axiuoiasdf", :)))
+
+sfa3 = merge(sfa2, sfa1)
+@test skipall(sfa3)
+@test !skipall(sfa2) # merge shouldn't have changed sfa2
+sfa4 = merge!(sfa2, sfa1)
+@test skipall(sfa4)
+@test skipall(sfa2) # merge! should have changed sfa2
