@@ -19,7 +19,6 @@ function _to_regexp(s::AbstractString)
     pattern = "^$pattern\$"
     return minus_flag, Regex(pattern, 0x040a000a, 0x40000000)
 end
-_to_regexp(r::Regex) = error("This function does not support Regex as input anymore")
 # Transforms string or regexps in a vector of regexps
 function _process_input(s::String)
     # Try to see if there are multiple inputs (separated by ;)

@@ -53,6 +53,9 @@ dm2 = extract_countries(["italy","spain","france","norway"])
 possible_selector_values()
 valid_column_names()
 
+# Test that extract_countries returns nothing if no matching country is found
+@test extract_countries("IDFSDF") === nothing
+
 # skip_polyarea coverage
 sfa1 = SkipFromAdmin("France", :)
 sfa2 = SkipFromAdmin("France", 1)
@@ -68,6 +71,7 @@ sd = mergeSkipDict([
 validate_skipDict(sd) # Check it doesn't error
 @test_throws "more than one row" validate_skipDict(skipDict(("A", :)))
 @test_throws "no match" validate_skipDict(skipDict(("Axiuoiasdf", :)))
+@test_throws "greater than" validate_skipDict(skipDict(("Italy", 35)))
 
 sfa3 = merge(sfa2, sfa1)
 @test skipall(sfa3)
@@ -75,3 +79,9 @@ sfa3 = merge(sfa2, sfa1)
 sfa4 = merge!(sfa2, sfa1)
 @test skipall(sfa4)
 @test skipall(sfa2) # merge! should have changed sfa2
+
+sfa = SkipFromAdmin("France", 1)
+sfb = SkipFromAdmin("France", 1:3)
+@test sfb.idxs != sfa.idxs
+merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
+@test sfb.idxs == sfa.idxs
