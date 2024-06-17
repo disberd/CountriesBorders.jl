@@ -126,7 +126,7 @@ dmn = extract_countries("italy; spain; france; norway"; skip_areas = [
 ])
 ```
 """
-function extract_countries(shapetable::GeoTables.SHP.Table; skip_areas = nothing, kwargs...)
+function extract_countries(shapetable::GeoTables.GeoTable = GEOTABLE[]; skip_areas = nothing, kwargs...)
 	downselection = falses(Tables.rowcount(shapetable))
 	for (k, v) in kwargs
 		key = Symbol(uppercase(string(k)))
@@ -156,8 +156,6 @@ function extract_countries(shapetable::GeoTables.SHP.Table; skip_areas = nothing
 		return nothing
 	end
 end
-# Other convenience methods
-extract_countries(geotable::GeoTables.GeoTable = GEOTABLE[];kwargs...) = extract_countries(getfield(geotable, :table); kwargs...)
 # Method that just searches the admin column
 extract_countries(name::Union{AbstractString, Vector{<:AbstractString}};kwargs...) = extract_countries(;admin = name, kwargs...)
 
