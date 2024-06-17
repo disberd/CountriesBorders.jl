@@ -2,6 +2,7 @@
 The contents o this file have been mostly taken and adapted from the
 [GeoIO.jl](https://github.com/JuliaEarth/GeoIO.jl) package which is licensed
 under MIT license.
+Reuse of this code has been explicitly allowed by the original authors in https://github.com/JuliaEarth/GeoIO.jl/issues/91
 The corresponding MIT License is copied below:
 
 MIT License
@@ -28,16 +29,12 @@ SOFTWARE.
 =#
 
 # Part from https://github.com/JuliaEarth/GeoIO.jl/blob/8c0eb84223ecf8a8601850f8b7cc27f81a18d68c/src/conversion.jl.
-function topoints(geom, is3d::Bool)
-  if is3d
-    [Point(GI.x(p), GI.y(p), GI.z(p)) for p in GI.getpoint(geom)]
-  else
-    [Point(GI.x(p), GI.y(p)) for p in GI.getpoint(geom)]
-  end
+function topoints(geom)
+    [LatLon(GI.y(p), GI.x(p)) |> Point for p in GI.getpoint(geom)]
 end
 
-function tochain(geom, is3d::Bool)
-  points = topoints(geom, is3d)
+function tochain(geom)
+  points = topoints(geom)
   if first(points) == last(points)
     # fix backend issues: https://github.com/JuliaEarth/GeoTables.jl/issues/32
     while first(points) == last(points) && length(points) ≥ 2
@@ -49,9 +46,9 @@ function tochain(geom, is3d::Bool)
   end
 end
 
-function topolygon(geom, is3d::Bool, fix::Bool)
+function topolygon(geom, fix::Bool)
   # fix backend issues: https://github.com/JuliaEarth/GeoTables.jl/issues/32
-  toring(g) = close(tochain(g, is3d))
+  toring(g) = close(tochain(g))
   outer = toring(GI.getexterior(geom))
   if GI.nhole(geom) == 0
     PolyArea(outer; fix)
@@ -62,35 +59,31 @@ function topolygon(geom, is3d::Bool, fix::Bool)
 end
 
 function _convert(::Type{Point}, ::GI.PointTrait, geom)
-  if GI.is3d(geom)
-    Point(GI.x(geom), GI.y(geom), GI.z(geom))
-  else
-    Point(GI.x(geom), GI.y(geom))
-  end
+    LatLon(GI.y(geom), GI.x(geom)) |> Point
 end
 
-_convert(::Type{Segment}, ::GI.LineTrait, geom) = Segment(topoints(geom, GI.is3d(geom))...)
+_convert(::Type{Segment}, ::GI.LineTrait, geom) = Segment(topoints(geom)...)
 
-_convert(::Type{Chain}, ::GI.LineStringTrait, geom) = tochain(geom, GI.is3d(geom))
+_convert(::Type{Chain}, ::GI.LineStringTrait, geom) = tochain(geom)
 
 _convert(::Type{Polygon}, trait::GI.PolygonTrait, geom) = _convert_with_fix(trait, geom, true)
 
 function _convert(::Type{Multi}, ::GI.MultiPointTrait, geom)
-  Multi(topoints(geom, GI.is3d(geom)))
+  Multi(topoints(geom))
 end
 
 function _convert(::Type{Multi}, ::GI.MultiLineStringTrait, geom)
   is3d = GI.is3d(geom)
-  Multi([tochain(g, is3d) for g in GI.getgeom(geom)])
+  Multi([tochain(g) for g in GI.getgeom(geom)])
 end
 
 _convert(::Type{Multi}, trait::GI.MultiPolygonTrait, geom) = _convert_with_fix(trait, geom, true)
 
-_convert_with_fix(::GI.PolygonTrait, geom, fix) = topolygon(geom, GI.is3d(geom), fix)
+_convert_with_fix(::GI.PolygonTrait, geom, fix) = topolygon(geom, fix)
 
 function _convert_with_fix(::GI.MultiPolygonTrait, geom, fix)
-  is3d = GI.is3d(geom)
-  Multi([topolygon(g, is3d, fix) for g in GI.getgeom(geom)])
+  @assert !GI.is3d(geom) "We only support 2d geometries (lon/lat coordinates) but we got a 3d geometry"
+  Multi([topolygon(g, fix) for g in GI.getgeom(geom)])
 end
 
 # -----------------------------------------

@@ -5,6 +5,7 @@ version = "0.2.1"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+CoordRefSystems = "b46f11dc-f210-4604-bfba-323c1ec968cb"
 GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
 GeoJSON = "61d90e0f-e114-555e-ac52-39dfb47a3ef9"
 GeoTables = "e502b557-6362-48c1-8219-d30d308dcdb0"

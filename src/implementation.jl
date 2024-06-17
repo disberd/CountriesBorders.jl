@@ -28,26 +28,27 @@ end
 _process_input(v::Array) = vcat(map(_process_input, v)...)
 
 # This function removes from the domain the areas specified in the SkipDict
-function process_domain!(dmn, sd::SkipDict, geotable)
+function process_domain!(subset::GeoTables.SubGeoTable, sd::SkipDict)
+    dmn = domain(subset)
 	removed_idx = falses(length(dmn))
 	isempty(removed_idx) && return dmn
 	for (admin, s) in sd
 		idx = findfirst(startswith(admin), geotable.ADMIN)
 		isnothing(idx) && continue
-		geom = dmn[idx]
-		if skipall(s) || length(geom.items) == length(s.idxs)
+		geoms = dmn[idx] |> parent
+		if skipall(s) || length(geoms) == length(s.idxs)
 			removed_idx[idx] = true
 		else
 			name = admin
-			lg = length(geom.items)
+			lg = length(geoms)
 			mi = maximum(s.idxs)
 			@assert mi <= lg "The provided idxs to remove from '$name' have at laset one idx ($mi) which is greater than the number of PolyAreas associated to '$name' ($lg PolyAreas)"
-			deleteat!(geom.items, s.idxs)
+			deleteat!(geoms, s.idxs)
 		end
 	end
 	all(removed_idx) && @warn "Some countries were downselected but have been removed based on the contents of the `skip_area` keyword argument."
 	deleteat!(dmn.items, removed_idx)
-	return dmn
+	return nothing
 end
 
 ## extract_countries ##
@@ -126,8 +127,8 @@ dmn = extract_countries("italy; spain; france; norway"; skip_areas = [
 ])
 ```
 """
-function extract_countries(shapetable::GeoTables.GeoTable = GEOTABLE[]; skip_areas = nothing, kwargs...)
-	downselection = falses(Tables.rowcount(shapetable))
+function extract_countries(geotable::GeoTables.GeoTable = get_default_geotable(), output_domain::Val{S} = Val{true}(); skip_areas = nothing, kwargs...) where S
+	downselection = falses(Tables.rowcount(geotable))
 	for (k, v) in kwargs
 		key = Symbol(uppercase(string(k)))
 		r_vec = try
@@ -136,28 +137,30 @@ function extract_countries(shapetable::GeoTables.GeoTable = GEOTABLE[]; skip_are
 			error("The kwarg values have to be provided as String or Vector{String}")
 		end
 		for (remove_from_list, regex) in r_vec
-			col_vals = map(getproperty(shapetable, key)) do str
+			col_vals = map(getproperty(geotable, key)) do str
 				match(regex, replace(str, "\0" => "")) !== nothing
 			end
 			downselection[col_vals] .= remove_from_list ? false : true
 		end
 	end
 	if any(downselection)
-		subset = Tables.subset(shapetable, downselection; viewhint = false)
-        geotable = GeoTables.GeoTable(subset)
+        geotable = deepcopy(geotable)
+        idxs = findall(downselection)
+        subset = GeoTables.SubGeoTable(geotable, idxs)
         # We extract the domain directly to modify it in case skip_areas are provided
-        dmn = domain(geotable)
 		if skip_areas !== nothing
 			sd = mergeSkipDict(skip_areas)
-			process_domain!(dmn, sd, geotable)
+			process_domain!(subset, sd)
 		end
-		return dmn
+		return S ? domain(subset) : subset
 	else
 		return nothing
 	end
 end
 # Method that just searches the admin column
-extract_countries(name::Union{AbstractString, Vector{<:AbstractString}};kwargs...) = extract_countries(;admin = name, kwargs...)
+extract_countries(name::Union{AbstractString, Vector{<:AbstractString}}, output_domain::Val{S} = Val{true}();kwargs...) where S = extract_countries(output_domain;admin = name, kwargs...)
+# Method that provides just the Val
+extract_countries(output_domain::Val{S};kwargs...) where S = extract_countries(get_default_geotable(), output_domain; kwargs...)
 
 # Extracting lat/lon coordaintes of the borders
 function extract_plot_coords(pa::PolyArea)
