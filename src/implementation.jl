@@ -1,9 +1,9 @@
-valid_column_names() = setdiff(Tables.columnnames(getfield(GEOTABLE[], :table)), [:geometry, :featurecla, :scalerank])
+valid_column_names() = setdiff(Tables.columnnames(get_default_geotable()), [:geometry, :featurecla, :scalerank])
 
 possible_selector_values() = let
 	f(s) = replace(s, "\0" => "")
 	fields = (:ADMIN, :CONTINENT, :REGION_UN, :SUBREGION, :REGION_WB)
-	NamedTuple((k => unique(map(f,getproperty(GEOTABLE[], k))) for k in fields))
+	NamedTuple((k => unique(map(f,getproperty(get_default_geotable(), k))) for k in fields))
 end
 
 # Make a case-insensitive regexp from a string
@@ -54,24 +54,24 @@ end
 
 ## extract_countries ##
 """
-	extract_countries([shapetable::Shapefile.Table]; skip_areas = nothing, kwargs...)
+	extract_countries([geotable::GeoTables.GeoTable]; skip_areas = nothing, kwargs...)
 	extract_countries(admin::Union{AbstractString, Vector{<:AbstractString}}; skip_areas = nothing, kwargs...)
 
 Extract and returns the domain (`<:Meshes.Domain`) containing all the countries
 that match a search query provided via the kwargs...
 
-The returned `domain` can be used to check inclusion of `Meshes.Point` objects
+The returned `domain` can be used to check inclusion of points expressed as [`SimpleLatLon`](@ref) instances,
 or can be directly plotted using `scattergeo` from PlotlyBase and the dependent
 packages (e.g. PlutoPlotly, PlotlyJS)
 
-The function can take as input a custom `shapetable` but it's usually simply
+The function can take as input a custom `geotable` but it's usually simply
 called without one, in which case it uses the one loaded by default by the
 package, which is obtained from the 1/110m maps from
 [naturalearthdata.com](https://www.naturalearthdata.com/).  Specifically, the
 shape file used to obtain the coordinates of the countries borders is located at
-[https://github.com/nvkelso/natural-earth-vector/blob/master/110m_cultural/ne_110m_admin_0_countries_lakes.shp](https://github.com/nvkelso/natural-earth-vector/blob/master/110m_cultural/ne_110m_admin_0_countries_lakes.shp).
+[https://github.com/nvkelso/natural-earth-vector/blob/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_110m_admin_0_countries_lakes.geojson](https://github.com/nvkelso/natural-earth-vector/blob/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_110m_admin_0_countries_lakes.geojson)
 
-The `shapetable` contains a row per country and various country-related
+The `geotable` contains a row per country and various country-related
 informations among the columns
 
 The downselection of countries to form a domain is performed by passing keyword
@@ -81,7 +81,7 @@ arguments containing `String` or `Vector{String}` values.
 
 ## Input Parsing
 
-For each keyword argument, the function performs a downselection on the `shapetable` column whose name matches the keyword argument name. The downselection is done based on the string provided as value:
+For each keyword argument, the function performs a downselection on the `geotable` column whose name matches the keyword argument name. The downselection is done based on the string provided as value:
 - The string is used to match the full name (case-insensitive) with the value of the specified column for each row of the table. 
 - The `*` wildcard can be used within the string to expand to any number of word or space characters.
 - If the string starts with the '-' character, all rows that match are removed from the current downselection. Otherwise, the matching rows are added to the downselection (One can also put a '+' in front of the string to use for the matching to emphasise addition rather than deletion).
@@ -126,6 +126,14 @@ dmn = extract_countries("italy; spain; france; norway"; skip_areas = [
 	"Spain" # This will remove Spain in its entirety
 	SKIP_NONCONTINENTAL_EU # This will remove Svalbard and French Guyana
 ])
+
+catania = SimpleLatLon(37.5, 15.09) # Location of Catania, Sicily
+
+catania in dmn # This returns false, as sicily is excluded from the domain
+
+rome = SimpleLatLon(41.9, 12.49) # Rome
+
+rome in dmn # This returns true
 ```
 """
 function extract_countries(geotable::GeoTables.GeoTable = get_default_geotable(), output_domain::Val{S} = Val{true}(); skip_areas = nothing, kwargs...) where S

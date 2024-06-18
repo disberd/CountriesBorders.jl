@@ -29,6 +29,13 @@ SOFTWARE.
 using CoordRefSystems: Deg, Rad, Geographic, Datum, addunit, WGS84Latest
 
 
+"""
+    SimpleLatLon(lat, lon)
+    SimpleLatLon{Datum}(lat, lon)
+Simple structure mirroring `LatLon` from CoordRefSystems. It defaults to Float32 precision on the fields (expressed in ° from Unitful) and is used to simplify the check for inclusion in a 2d PolyArea on the world.
+
+The domain returned from [`extract_countries`](@ref) is composed of `Meshes.Point` points with `SimpleLatLon` coordinates.
+"""
 struct SimpleLatLon{Datum,D<:Deg} <: Geographic{Datum}
     lat::D
     lon::D
