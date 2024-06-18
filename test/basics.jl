@@ -87,3 +87,13 @@ sfb = SkipFromAdmin("France", 1:3)
 @test sfb.idxs != sfa.idxs
 merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
 @test sfb.idxs == sfa.idxs
+
+@testset "Conversions" begin
+    sll_wgs = SimpleLatLon(10,20)
+    ll_wgs = convert(LatLon{WGS84Latest}, sll)
+    ll_itrf = convert(LatLon{ITRF{2008}}, sll)
+    sll_itrf = convert(SimpleLatLon{ITRF{2008}}, ll_itrf)
+    ll_itrf2 = convert(LatLon{ITRF{2008}}, LatLon(10f0,20f0))
+    @test sll_itrf.lat ≈ ll_itrf.lat ≈ ll_itrf2.lat
+    @test sll_itrf.lon ≈ ll_itrf.lon ≈ ll_itrf2.lon
+end
