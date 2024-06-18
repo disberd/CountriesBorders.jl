@@ -1,6 +1,8 @@
 using CountriesBorders
 using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict
 using Meshes
+using CoordRefSystems
+using Test
 
 example1 = extract_countries(;continent = "europe", admin="-russia")
 example2 = extract_countries(;admin="-russia", continent = "europe")
@@ -15,17 +17,17 @@ example3 = extract_countries(;subregion = "*europe; -eastern europe")
     # We test the skip_areas example
 
     included_cities = cities = [
-        (12.49, 41.9) # Rome
-        (9.113, 39.217) # Cagliari
-        (2.349, 48.864) # Paris
-        (10.738, 59.913) # Oslo
+        SimpleLatLon(41.9, 12.49) # Rome
+        SimpleLatLon(39.217, 9.113) # Cagliari
+        SimpleLatLon(48.864, 2.349) # Paris
+        SimpleLatLon(59.913, 10.738) # Oslo
     ] .|> Meshes.Point
 
     excluded_cities = cities = [
-        (15.09, 37.5) # Catania
-        (-3.703, 40.416) # Madrid
-        (-52.773, 5.212) # Guiana Space Center
-        (15.652, 78.222) # Svalbard Museum
+        LatLon(37.5, 15.09) # Catania
+        LatLon(40.416, -3.703) # Madrid
+        LatLon(5.212, -52.773) # Guiana Space Center
+        LatLon(78.222, 15.652) # Svalbard Museum
     ] .|> Meshes.Point
 
     dmn_excluded = extract_countries("italy; spain; france; norway"; skip_areas = [
