@@ -82,6 +82,7 @@ function Meshes.∠(A::S, B::P, C::S) where {Datum, S<:Point{2, <:SimpleLatLon{D
     Meshes.∠(A - B, C - B)
 end
 
+const SimpleRegion{Datum, D} = Union{PolyArea{2, SimpleLatLon{Datum, D}}, Multi{2, SimpleLatLon{Datum, D}}, Domain{2, SimpleLatLon{Datum, D}}}
+
 # Add specific catchall methods for `in`
-Base.in(p, dmn::Domain{2, <:SimpleLatLon{Datum, D}}) where {Datum, D} = Base.in(SimpleLatLon{Datum, D}(p) |> Point, dmn)
-Base.in(p::Point, dmn::Domain{2, <:SimpleLatLon}) = invoke(Base.in, Tuple{Point, Domain}, p, dmn)
+Base.in(p::Union{SimpleLatLon, LatLon}, region::SimpleRegion{Datum, D}) where {Datum, D} = Base.in(SimpleLatLon{Datum, D}(p) |> Point, region)

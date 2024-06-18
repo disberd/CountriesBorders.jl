@@ -21,7 +21,7 @@ module GeoTablesConversion
     include("types.jl")
     include("conversion_utils.jl")
 end
-using .GeoTablesConversion: SimpleLatLon
+using .GeoTablesConversion: SimpleLatLon, SimpleRegion
 
 const GEOTABLE = Ref{GeoTables.GeoTable}()
 
