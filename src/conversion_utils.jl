@@ -2,7 +2,7 @@
 The contents o this file have been mostly taken and adapted from the
 [GeoIO.jl](https://github.com/JuliaEarth/GeoIO.jl) package which is licensed
 under MIT license.
-Reuse of this code has been explicitly allowed by the original authors in https://github.com/JuliaEarth/GeoIO.jl/issues/91
+Discussion about the re-use of this code with the original authors can be found in https://github.com/JuliaEarth/GeoIO.jl/issues/91
 The corresponding MIT License is copied below:
 
 MIT License
@@ -30,7 +30,7 @@ SOFTWARE.
 
 # Part from https://github.com/JuliaEarth/GeoIO.jl/blob/8c0eb84223ecf8a8601850f8b7cc27f81a18d68c/src/conversion.jl.
 function topoints(geom)
-    [LatLon(GI.y(p), GI.x(p)) |> Point for p in GI.getpoint(geom)]
+    [SimpleLatLon(GI.y(p), GI.x(p)) |> Point for p in GI.getpoint(geom)]
 end
 
 function tochain(geom)
@@ -59,7 +59,7 @@ function topolygon(geom, fix::Bool)
 end
 
 function _convert(::Type{Point}, ::GI.PointTrait, geom)
-    LatLon(GI.y(geom), GI.x(geom)) |> Point
+    SimpleLatLon(GI.y(geom), GI.x(geom)) |> Point
 end
 
 _convert(::Type{Segment}, ::GI.LineTrait, geom) = Segment(topoints(geom)...)
@@ -73,7 +73,6 @@ function _convert(::Type{Multi}, ::GI.MultiPointTrait, geom)
 end
 
 function _convert(::Type{Multi}, ::GI.MultiLineStringTrait, geom)
-  is3d = GI.is3d(geom)
   Multi([tochain(g) for g in GI.getgeom(geom)])
 end
 

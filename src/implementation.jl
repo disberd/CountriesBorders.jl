@@ -33,9 +33,10 @@ function process_domain!(subset::GeoTables.SubGeoTable, sd::SkipDict)
 	removed_idx = falses(length(dmn))
 	isempty(removed_idx) && return dmn
 	for (admin, s) in sd
-		idx = findfirst(startswith(admin), geotable.ADMIN)
+		idx = findfirst(startswith(admin), subset.ADMIN)
 		isnothing(idx) && continue
-		geoms = dmn[idx] |> parent
+		geom = dmn[idx]
+        geoms = geom isa Multi ? parent(geom) : [geom]
 		if skipall(s) || length(geoms) == length(s.idxs)
 			removed_idx[idx] = true
 		else
@@ -47,7 +48,7 @@ function process_domain!(subset::GeoTables.SubGeoTable, sd::SkipDict)
 		end
 	end
 	all(removed_idx) && @warn "Some countries were downselected but have been removed based on the contents of the `skip_area` keyword argument."
-	deleteat!(dmn.items, removed_idx)
+	deleteat!(dmn.inds, removed_idx)
 	return nothing
 end
 
@@ -161,22 +162,3 @@ end
 extract_countries(name::Union{AbstractString, Vector{<:AbstractString}}, output_domain::Val{S} = Val{true}();kwargs...) where S = extract_countries(output_domain;admin = name, kwargs...)
 # Method that provides just the Val
 extract_countries(output_domain::Val{S};kwargs...) where S = extract_countries(get_default_geotable(), output_domain; kwargs...)
-
-# Extracting lat/lon coordaintes of the borders
-function extract_plot_coords(pa::PolyArea)
-	v = map(coordinates, pa.outer.vertices)
-    lon = first.(v)
-    lat = last.(v)
-	return (;lon, lat)
-end
-
-function extract_plot_coords(md::Union{Multi, Domain})
-	lon = Float64[]
-	lat = Float64[]
-	for i ∈ md.items
-		tx, ty = extract_plot_coords(i)
-		append!(lon, tx, [NaN])
-		append!(lat, ty, [NaN])
-	end
-	(;lon,lat)
-end
