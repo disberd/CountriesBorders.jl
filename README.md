@@ -27,4 +27,4 @@ madrid in dmn # Returns true
 paris in dmn # Returns false as we only extracted italy and spain
 ```
 
-See the docstring of `extract_countries` (and its extended help) for more details
+See the docstring of `extract_countries` (and its extended help) for more details, or check the example notebook within the `notebooks` folder. A static version of the notebook is also available at [this link](https://rawcdn.githack.com/disberd/CountriesBorders.jl/main/notebooks/example_use.html)
