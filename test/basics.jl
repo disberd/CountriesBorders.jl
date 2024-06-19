@@ -90,7 +90,7 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
 @test sfb.idxs == sfa.idxs
 
 @testset "Conversions" begin
-    const ValidUnion = Union{SimpleLatLon, LatLon}
+    ValidUnion = Union{SimpleLatLon, LatLon}
     function ≈(a::ValidUnion, b::ValidUnion)
         for name in (:lat, :lon)
             av = getproperty(a, name) |> ustrip
