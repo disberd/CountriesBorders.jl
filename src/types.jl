@@ -34,11 +34,19 @@ using CoordRefSystems: Deg, Rad, Geographic, Datum, addunit, WGS84Latest
     SimpleLatLon{Datum}(lat, lon)
 Simple structure mirroring `LatLon` from CoordRefSystems. It defaults to Float32 precision on the fields (expressed in ° from Unitful) and is used to simplify the check for inclusion in a 2d PolyArea on the world.
 
+Contrary to `LatLon`, the constructor for LatLon also enforces the latitude to be between -90° and 90°, and wraps the longitude so it's value is ensured to be between -180° and 180°.
+
 The domain returned from [`extract_countries`](@ref) is composed of `Meshes.Point` points with `SimpleLatLon` coordinates.
 """
 struct SimpleLatLon{Datum,D<:Deg} <: Geographic{Datum}
     lat::D
     lon::D
+    function SimpleLatLon{Datum, D}(lat::Deg, lon::Deg) where {Datum, D}
+        @assert abs(lat) <= π/2 "You must provide a latitude between -90° and 90°"
+        # We wrap directly the lon to make sure it's 
+        lon = rem(lon, 360u"°", RoundNearest)
+        new{Datum, D}(lat, lon)
+    end
 end
 
 const Deg32 = typeof(1f0u"°")

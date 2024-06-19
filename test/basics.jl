@@ -39,6 +39,9 @@ example3 = extract_countries(;subregion = "*europe; -eastern europe")
     @test all(in(dmn_excluded), included_cities)
     @test all(!in(dmn_excluded), excluded_cities)
 
+    # Check wrapping
+    @test SimpleLatLon(41.9, 12.49 + 360) in dmn_excluded
+
     dmn_full = extract_countries("italy; spain; france; norway")
     @test all(in(dmn_full), included_cities)
     @test all(in(dmn_full), excluded_cities)
@@ -99,6 +102,7 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
         end
         return true
     end
+    ≈(a,b) = Base.isapprox(a,b)
     sll_wgs = SimpleLatLon(10,20)
     ll_wgs = convert(LatLon{WGS84Latest}, sll_wgs)
     ll_itrf = convert(LatLon{ITRF{2008}}, sll_wgs)
@@ -108,6 +112,10 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
     @test sll_itrf ≈ convert(SimpleLatLon{ITRF{2008}}, sll_wgs)
     rad = 1u"rad"
     @test SimpleLatLon(90,90) ≈ SimpleLatLon(π/2 * rad, π/2 * rad)
+
+    # Test constructor errors and longitude wrapping
+    @test_throws "between -90° and 90°" SimpleLatLon(180, 2)
+    @test SimpleLatLon(0, 41 + 360).lon |> ustrip ≈ 41
 end
 
 @test_throws "geometry column not found" geomcolumn([:asd, :lol])
