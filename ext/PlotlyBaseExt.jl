@@ -8,7 +8,7 @@ function PlotlyBase.scattergeo(p::SimpleRegion; kwargs...)
 end
 
 function PlotlyBase.scattergeo(ps::Vector{<:SimpleLatLon}; kwargs...)
-	lon, lat = extract_plot_coords(p)
+	(;lon, lat) = extract_plot_coords(ps)
 	scattergeo(; lat, lon, kwargs...)
 end
 
