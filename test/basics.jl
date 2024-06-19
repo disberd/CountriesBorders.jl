@@ -119,3 +119,15 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
 end
 
 @test_throws "geometry column not found" geomcolumn([:asd, :lol])
+
+@testset "in" begin
+    dmn = extract_countries("italy")
+
+    rome_sll = SimpleLatLon(41.9, 12.49)
+    rome_ll = LatLon(41.9, 12.49)
+    rome_nt1 = (;lat = 41.9, lon = 12.49)
+    rome_nt2 = (;lon = 12.49, lat = 41.9)
+    for p in (rome_sll, rome_ll, rome_nt1, rome_nt2)
+        @test p in dmn
+    end
+end

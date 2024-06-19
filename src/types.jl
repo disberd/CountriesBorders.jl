@@ -100,4 +100,15 @@ end
 const SimpleRegion{Datum, D} = Union{PolyArea{2, SimpleLatLon{Datum, D}}, Multi{2, SimpleLatLon{Datum, D}}, Domain{2, SimpleLatLon{Datum, D}}}
 
 # Add specific catchall methods for `in`
-Base.in(p::Union{SimpleLatLon, LatLon}, region::SimpleRegion{Datum, D}) where {Datum, D} = Base.in(SimpleLatLon{Datum, D}(p) |> Point, region)
+function Base.in(ll::Union{SimpleLatLon, LatLon}, region::SimpleRegion{Datum, D}) where {Datum, D} 
+    sll = SimpleLatLon{Datum, D}(ll)
+    return Point(sll) in region
+end
+
+# Add a method for `in` for NamedTuple inputs
+function Base.in(nt::Union{NamedTuple{(:lat, :lon)}, NamedTuple{(:lon, :lat)}}, region::SimpleRegion{Datum, D}) where {Datum, D}
+    (;lat, lon) = nt
+    sll = SimpleLatLon{Datum}(lat, lon)
+    sll_D = convert(SimpleLatLon{Datum, D}, sll)
+    return Point(sll_D) in region
+end
