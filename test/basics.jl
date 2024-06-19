@@ -3,6 +3,7 @@ using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipD
 using Meshes
 using CoordRefSystems
 using Test
+using Unitful
 
 example1 = extract_countries(;continent = "europe", admin="-russia")
 example2 = extract_countries(;admin="-russia", continent = "europe")
@@ -89,11 +90,22 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
 @test sfb.idxs == sfa.idxs
 
 @testset "Conversions" begin
+    const ValidUnion = Union{SimpleLatLon, LatLon}
+    function ≈(a::ValidUnion, b::ValidUnion)
+        for name in (:lat, :lon)
+            av = getproperty(a, name) |> ustrip
+            bv = getproperty(b, name) |> ustrip
+            Base.isapprox(av, bv) || false
+        end
+        return true
+    end
     sll_wgs = SimpleLatLon(10,20)
     ll_wgs = convert(LatLon{WGS84Latest}, sll_wgs)
     ll_itrf = convert(LatLon{ITRF{2008}}, sll_wgs)
     sll_itrf = convert(SimpleLatLon{ITRF{2008}}, ll_itrf)
     ll_itrf2 = convert(LatLon{ITRF{2008}}, LatLon(10f0,20f0))
-    @test sll_itrf.lat ≈ ll_itrf.lat ≈ ll_itrf2.lat
-    @test sll_itrf.lon ≈ ll_itrf.lon ≈ ll_itrf2.lon
+    @test sll_itrf ≈ ll_itrf ≈ ll_itrf2
+    @test sll_itrf ≈ convert(SimpleLatLon{ITRF{2008}}, sll_wgs)
+    rad = 1u"rad"
+    @test SimpleLatLon(90,90) ≈ SimpleLatLon(π/2 * rad, π/2 * rad)
 end
