@@ -1,9 +1,9 @@
-valid_column_names() = setdiff(Tables.columnnames(getfield(GEOTABLE[], :table)), [:geometry, :featurecla, :scalerank])
+valid_column_names() = setdiff(Tables.columnnames(get_default_geotable()), [:geometry, :featurecla, :scalerank])
 
 possible_selector_values() = let
 	f(s) = replace(s, "\0" => "")
 	fields = (:ADMIN, :CONTINENT, :REGION_UN, :SUBREGION, :REGION_WB)
-	NamedTuple((k => unique(map(f,getproperty(GEOTABLE[], k))) for k in fields))
+	NamedTuple((k => unique(map(f,getproperty(get_default_geotable(), k))) for k in fields))
 end
 
 # Make a case-insensitive regexp from a string
@@ -28,48 +28,50 @@ end
 _process_input(v::Array) = vcat(map(_process_input, v)...)
 
 # This function removes from the domain the areas specified in the SkipDict
-function process_domain!(dmn, sd::SkipDict, geotable)
+function process_domain!(subset::GeoTables.SubGeoTable, sd::SkipDict)
+    dmn = domain(subset)
 	removed_idx = falses(length(dmn))
 	isempty(removed_idx) && return dmn
 	for (admin, s) in sd
-		idx = findfirst(startswith(admin), geotable.ADMIN)
+		idx = findfirst(startswith(admin), subset.ADMIN)
 		isnothing(idx) && continue
 		geom = dmn[idx]
-		if skipall(s) || length(geom.items) == length(s.idxs)
+        geoms = geom isa Multi ? parent(geom) : [geom]
+		if skipall(s) || length(geoms) == length(s.idxs)
 			removed_idx[idx] = true
 		else
 			name = admin
-			lg = length(geom.items)
+			lg = length(geoms)
 			mi = maximum(s.idxs)
 			@assert mi <= lg "The provided idxs to remove from '$name' have at laset one idx ($mi) which is greater than the number of PolyAreas associated to '$name' ($lg PolyAreas)"
-			deleteat!(geom.items, s.idxs)
+			deleteat!(geoms, s.idxs)
 		end
 	end
 	all(removed_idx) && @warn "Some countries were downselected but have been removed based on the contents of the `skip_area` keyword argument."
-	deleteat!(dmn.items, removed_idx)
-	return dmn
+	deleteat!(dmn.inds, removed_idx)
+	return nothing
 end
 
 ## extract_countries ##
 """
-	extract_countries([shapetable::Shapefile.Table]; skip_areas = nothing, kwargs...)
+	extract_countries([geotable::GeoTables.GeoTable]; skip_areas = nothing, kwargs...)
 	extract_countries(admin::Union{AbstractString, Vector{<:AbstractString}}; skip_areas = nothing, kwargs...)
 
 Extract and returns the domain (`<:Meshes.Domain`) containing all the countries
 that match a search query provided via the kwargs...
 
-The returned `domain` can be used to check inclusion of `Meshes.Point` objects
+The returned `domain` can be used to check inclusion of points expressed as [`SimpleLatLon`](@ref) instances,
 or can be directly plotted using `scattergeo` from PlotlyBase and the dependent
 packages (e.g. PlutoPlotly, PlotlyJS)
 
-The function can take as input a custom `shapetable` but it's usually simply
+The function can take as input a custom `geotable` but it's usually simply
 called without one, in which case it uses the one loaded by default by the
 package, which is obtained from the 1/110m maps from
 [naturalearthdata.com](https://www.naturalearthdata.com/).  Specifically, the
 shape file used to obtain the coordinates of the countries borders is located at
-[https://github.com/nvkelso/natural-earth-vector/blob/master/110m_cultural/ne_110m_admin_0_countries_lakes.shp](https://github.com/nvkelso/natural-earth-vector/blob/master/110m_cultural/ne_110m_admin_0_countries_lakes.shp).
+[https://github.com/nvkelso/natural-earth-vector/blob/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_110m_admin_0_countries_lakes.geojson](https://github.com/nvkelso/natural-earth-vector/blob/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_110m_admin_0_countries_lakes.geojson)
 
-The `shapetable` contains a row per country and various country-related
+The `geotable` contains a row per country and various country-related
 informations among the columns
 
 The downselection of countries to form a domain is performed by passing keyword
@@ -79,7 +81,7 @@ arguments containing `String` or `Vector{String}` values.
 
 ## Input Parsing
 
-For each keyword argument, the function performs a downselection on the `shapetable` column whose name matches the keyword argument name. The downselection is done based on the string provided as value:
+For each keyword argument, the function performs a downselection on the `geotable` column whose name matches the keyword argument name. The downselection is done based on the string provided as value:
 - The string is used to match the full name (case-insensitive) with the value of the specified column for each row of the table. 
 - The `*` wildcard can be used within the string to expand to any number of word or space characters.
 - If the string starts with the '-' character, all rows that match are removed from the current downselection. Otherwise, the matching rows are added to the downselection (One can also put a '+' in front of the string to use for the matching to emphasise addition rather than deletion).
@@ -124,10 +126,18 @@ dmn = extract_countries("italy; spain; france; norway"; skip_areas = [
 	"Spain" # This will remove Spain in its entirety
 	SKIP_NONCONTINENTAL_EU # This will remove Svalbard and French Guyana
 ])
+
+catania = SimpleLatLon(37.5, 15.09) # Location of Catania, Sicily
+
+catania in dmn # This returns false, as sicily is excluded from the domain
+
+rome = SimpleLatLon(41.9, 12.49) # Rome
+
+rome in dmn # This returns true
 ```
 """
-function extract_countries(shapetable::GeoTables.SHP.Table; skip_areas = nothing, kwargs...)
-	downselection = falses(Tables.rowcount(shapetable))
+function extract_countries(geotable::GeoTables.GeoTable = get_default_geotable(), output_domain::Val{S} = Val{true}(); skip_areas = nothing, kwargs...) where S
+	downselection = falses(Tables.rowcount(geotable))
 	for (k, v) in kwargs
 		key = Symbol(uppercase(string(k)))
 		r_vec = try
@@ -136,46 +146,27 @@ function extract_countries(shapetable::GeoTables.SHP.Table; skip_areas = nothing
 			error("The kwarg values have to be provided as String or Vector{String}")
 		end
 		for (remove_from_list, regex) in r_vec
-			col_vals = map(getproperty(shapetable, key)) do str
+			col_vals = map(getproperty(geotable, key)) do str
 				match(regex, replace(str, "\0" => "")) !== nothing
 			end
 			downselection[col_vals] .= remove_from_list ? false : true
 		end
 	end
 	if any(downselection)
-		subset = Tables.subset(shapetable, downselection; viewhint = false)
-        geotable = GeoTables.GeoTable(subset)
+        geotable = deepcopy(geotable)
+        idxs = findall(downselection)
+        subset = GeoTables.SubGeoTable(geotable, idxs)
         # We extract the domain directly to modify it in case skip_areas are provided
-        dmn = domain(geotable)
 		if skip_areas !== nothing
 			sd = mergeSkipDict(skip_areas)
-			process_domain!(dmn, sd, geotable)
+			process_domain!(subset, sd)
 		end
-		return dmn
+		return S ? domain(subset) : subset
 	else
 		return nothing
 	end
 end
-# Other convenience methods
-extract_countries(geotable::GeoTables.GeoTable = GEOTABLE[];kwargs...) = extract_countries(getfield(geotable, :table); kwargs...)
 # Method that just searches the admin column
-extract_countries(name::Union{AbstractString, Vector{<:AbstractString}};kwargs...) = extract_countries(;admin = name, kwargs...)
-
-# Extracting lat/lon coordaintes of the borders
-function extract_plot_coords(pa::PolyArea)
-	v = map(coordinates, pa.outer.vertices)
-    lon = first.(v)
-    lat = last.(v)
-	return (;lon, lat)
-end
-
-function extract_plot_coords(md::Union{Multi, Domain})
-	lon = Float64[]
-	lat = Float64[]
-	for i ∈ md.items
-		tx, ty = extract_plot_coords(i)
-		append!(lon, tx, [NaN])
-		append!(lat, ty, [NaN])
-	end
-	(;lon,lat)
-end
+extract_countries(name::Union{AbstractString, Vector{<:AbstractString}}, output_domain::Val{S} = Val{true}();kwargs...) where S = extract_countries(output_domain;admin = name, kwargs...)
+# Method that provides just the Val
+extract_countries(output_domain::Val{S};kwargs...) where S = extract_countries(get_default_geotable(), output_domain; kwargs...)

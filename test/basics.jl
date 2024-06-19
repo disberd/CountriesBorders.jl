@@ -1,6 +1,9 @@
 using CountriesBorders
-using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict
+using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn
 using Meshes
+using CoordRefSystems
+using Test
+using Unitful
 
 example1 = extract_countries(;continent = "europe", admin="-russia")
 example2 = extract_countries(;admin="-russia", continent = "europe")
@@ -15,18 +18,18 @@ example3 = extract_countries(;subregion = "*europe; -eastern europe")
     # We test the skip_areas example
 
     included_cities = cities = [
-        (12.49, 41.9) # Rome
-        (9.113, 39.217) # Cagliari
-        (2.349, 48.864) # Paris
-        (10.738, 59.913) # Oslo
+        SimpleLatLon(41.9, 12.49) # Rome
+        SimpleLatLon(39.217, 9.113) # Cagliari
+        SimpleLatLon(48.864, 2.349) # Paris
+        SimpleLatLon(59.913, 10.738) # Oslo
     ] .|> Meshes.Point
 
     excluded_cities = cities = [
-        (15.09, 37.5) # Catania
-        (-3.703, 40.416) # Madrid
-        (-52.773, 5.212) # Guiana Space Center
-        (15.652, 78.222) # Svalbard Museum
-    ] .|> Meshes.Point
+        LatLon(37.5, 15.09) # Catania
+        LatLon(40.416, -3.703) # Madrid
+        LatLon(5.212, -52.773) # Guiana Space Center
+        LatLon(78.222, 15.652) # Svalbard Museum
+    ]
 
     dmn_excluded = extract_countries("italy; spain; france; norway"; skip_areas = [
         ("Italy", 2)
@@ -85,3 +88,26 @@ sfb = SkipFromAdmin("France", 1:3)
 @test sfb.idxs != sfa.idxs
 merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
 @test sfb.idxs == sfa.idxs
+
+@testset "Conversions" begin
+    ValidUnion = Union{SimpleLatLon, LatLon}
+    function ≈(a::ValidUnion, b::ValidUnion)
+        for name in (:lat, :lon)
+            av = getproperty(a, name) |> ustrip
+            bv = getproperty(b, name) |> ustrip
+            Base.isapprox(av, bv) || false
+        end
+        return true
+    end
+    sll_wgs = SimpleLatLon(10,20)
+    ll_wgs = convert(LatLon{WGS84Latest}, sll_wgs)
+    ll_itrf = convert(LatLon{ITRF{2008}}, sll_wgs)
+    sll_itrf = convert(SimpleLatLon{ITRF{2008}}, ll_itrf)
+    ll_itrf2 = convert(LatLon{ITRF{2008}}, LatLon(10f0,20f0))
+    @test sll_itrf ≈ ll_itrf ≈ ll_itrf2
+    @test sll_itrf ≈ convert(SimpleLatLon{ITRF{2008}}, sll_wgs)
+    rad = 1u"rad"
+    @test SimpleLatLon(90,90) ≈ SimpleLatLon(π/2 * rad, π/2 * rad)
+end
+
+@test_throws "geometry column not found" geomcolumn([:asd, :lol])

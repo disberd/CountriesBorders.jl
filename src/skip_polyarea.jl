@@ -56,7 +56,7 @@ Verify that the provided `SkipDict` contains only valid entries w.r.t. `geotable
 
 An entry is valid if the `admin` name exists in `geotable` and if the corresponding `idxs` to be skipped are valid indices to the PolyAreas associated to the country identified by `admin`
 """
-function validate_skipDict(d::SkipDict; geotable = GEOTABLE[])
+function validate_skipDict(d::SkipDict; geotable = get_default_geotable())
     ADMIN = geotable.ADMIN
     foreach(d) do (name, s)
         idxs = findall(startswith(name), ADMIN)
@@ -67,7 +67,7 @@ function validate_skipDict(d::SkipDict; geotable = GEOTABLE[])
         skipall(s) && return
         idx = first(idxs)
         geom = geotable.geometry[idx]
-        lg = length(geom.items)
+        lg = geom isa Multi ? length(parent(geom)) : 1
         mi = maximum(s.idxs)
         @assert mi <= lg "The provided idxs to remove from '$name' have at laset one idx ($mi) which is greater than the number of PolyAreas associated to '$name' ($lg PolyAreas)"
     end
