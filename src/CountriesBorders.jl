@@ -46,7 +46,9 @@ include("plot_coordinates.jl")
 @compile_workload begin
     admin_geojson = get_default_geojson(;)
     table = GeoTablesConversion.asgeotable(admin_geojson, true)
-    extract_countries(table; continent = "asia")
+    dmn = extract_countries("italy; spain")
+    rome = SimpleLatLon(41.9, 12.49)
+    rome in dmn # Returns true
 end
 
 end # module CountriesBorders
