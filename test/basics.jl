@@ -1,5 +1,5 @@
 using CountriesBorders
-using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict
+using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn
 using Meshes
 using CoordRefSystems
 using Test
@@ -109,3 +109,5 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
     rad = 1u"rad"
     @test SimpleLatLon(90,90) ≈ SimpleLatLon(π/2 * rad, π/2 * rad)
 end
+
+@test_throws "geometry column not found" geomcolumn([:asd, :lol])
