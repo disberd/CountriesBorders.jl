@@ -28,6 +28,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =#
 
+# The commented out lines below are those not needed for parsing the specific file of countries borders. These might be enabled in the future if needed.
+
 # Part from https://github.com/JuliaEarth/GeoIO.jl/blob/8c0eb84223ecf8a8601850f8b7cc27f81a18d68c/src/conversion.jl.
 function topoints(geom)
     [SimpleLatLon(GI.y(p), GI.x(p)) |> Point for p in GI.getpoint(geom)]
@@ -41,8 +43,8 @@ function tochain(geom)
       pop!(points)
     end
     Ring(points)
-  else
-    Rope(points)
+#   else
+#     Rope(points)
   end
 end
 
@@ -58,25 +60,25 @@ function topolygon(geom, fix::Bool)
   end
 end
 
-function _convert(::Type{Point}, ::GI.PointTrait, geom)
-    SimpleLatLon(GI.y(geom), GI.x(geom)) |> Point
-end
+# function _convert(::Type{Point}, ::GI.PointTrait, geom)
+#     SimpleLatLon(GI.y(geom), GI.x(geom)) |> Point
+# end
 
-_convert(::Type{Segment}, ::GI.LineTrait, geom) = Segment(topoints(geom)...)
+# _convert(::Type{Segment}, ::GI.LineTrait, geom) = Segment(topoints(geom)...)
 
-_convert(::Type{Chain}, ::GI.LineStringTrait, geom) = tochain(geom)
+# _convert(::Type{Chain}, ::GI.LineStringTrait, geom) = tochain(geom)
 
-_convert(::Type{Polygon}, trait::GI.PolygonTrait, geom) = _convert_with_fix(trait, geom, true)
+# _convert(::Type{Polygon}, trait::GI.PolygonTrait, geom) = _convert_with_fix(trait, geom, true)
 
-function _convert(::Type{Multi}, ::GI.MultiPointTrait, geom)
-  Multi(topoints(geom))
-end
+# function _convert(::Type{Multi}, ::GI.MultiPointTrait, geom)
+#   Multi(topoints(geom))
+# end
 
-function _convert(::Type{Multi}, ::GI.MultiLineStringTrait, geom)
-  Multi([tochain(g) for g in GI.getgeom(geom)])
-end
+# function _convert(::Type{Multi}, ::GI.MultiLineStringTrait, geom)
+#   Multi([tochain(g) for g in GI.getgeom(geom)])
+# end
 
-_convert(::Type{Multi}, trait::GI.MultiPolygonTrait, geom) = _convert_with_fix(trait, geom, true)
+# _convert(::Type{Multi}, trait::GI.MultiPolygonTrait, geom) = _convert_with_fix(trait, geom, true)
 
 _convert_with_fix(::GI.PolygonTrait, geom, fix) = topolygon(geom, fix)
 
@@ -89,16 +91,16 @@ end
 # GeoInterface.jl approach to call convert
 # -----------------------------------------
 
-geointerface_geomtype(::GI.PointTrait) = Point
-geointerface_geomtype(::GI.LineTrait) = Segment
-geointerface_geomtype(::GI.LineStringTrait) = Chain
-geointerface_geomtype(::GI.PolygonTrait) = Polygon
-geointerface_geomtype(::GI.MultiPointTrait) = Multi
-geointerface_geomtype(::GI.MultiLineStringTrait) = Multi
-geointerface_geomtype(::GI.MultiPolygonTrait) = Multi
+# geointerface_geomtype(::GI.PointTrait) = Point
+# geointerface_geomtype(::GI.LineTrait) = Segment
+# geointerface_geomtype(::GI.LineStringTrait) = Chain
+# geointerface_geomtype(::GI.PolygonTrait) = Polygon
+# geointerface_geomtype(::GI.MultiPointTrait) = Multi
+# geointerface_geomtype(::GI.MultiLineStringTrait) = Multi
+# geointerface_geomtype(::GI.MultiPolygonTrait) = Multi
 
 geom2meshes(geom, fix=true) = geom2meshes(GI.geomtrait(geom), geom, fix)
-geom2meshes(trait, geom, fix) = _convert(geointerface_geomtype(trait), trait, geom)
+# geom2meshes(trait, geom, fix) = _convert(geointerface_geomtype(trait), trait, geom)
 geom2meshes(trait::Union{GI.MultiPolygonTrait,GI.PolygonTrait}, geom, fix) = _convert_with_fix(trait, geom, fix)
 
 # Part from https://github.com/JuliaEarth/GeoIO.jl/blob/8c0eb84223ecf8a8601850f8b7cc27f81a18d68c/src/utils.jl
@@ -130,21 +132,5 @@ function geomcolumn(names)
     throw(ErrorException("geometry column not found"))
   else
     Symbol(gnames[select])
-  end
-end
-
-# add "_" to `name` until it is unique compared to the table `names`
-function uniquename(names, name)
-  uname = name
-  while uname ∈ names
-    uname = Symbol(uname, :_)
-  end
-  uname
-end
-
-# make `newnames` unique compared to the table `names`
-function uniquenames(names, newnames)
-  map(newnames) do name
-    uniquename(names, name)
   end
 end
