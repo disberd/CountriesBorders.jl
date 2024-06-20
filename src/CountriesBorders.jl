@@ -18,10 +18,13 @@ module GeoTablesConversion
     import GeoInterface as GI
     using CoordRefSystems
     using Unitful
+
+    export SimpleLatLon, SimpleRegion
+
     include("types.jl")
     include("conversion_utils.jl")
 end
-using .GeoTablesConversion: SimpleLatLon, SimpleRegion
+using .GeoTablesConversion
 
 const GEOTABLE = Ref{GeoTables.GeoTable}()
 
