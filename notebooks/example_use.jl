@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.42
+# v0.19.43
 
 using Markdown
 using InteractiveUtils
@@ -341,17 +341,17 @@ weakdeps = ["IntervalSets", "StaticArrays"]
 
 [[deps.CoordRefSystems]]
 deps = ["Random", "Rotations", "StaticArrays", "Unitful", "Zygote"]
-git-tree-sha1 = "338271d93aa07818d5f8d1aa5b94548730a65f6b"
+git-tree-sha1 = "0fb1ed8a7c491921f61ad3d7ff941021aa467d28"
 uuid = "b46f11dc-f210-4604-bfba-323c1ec968cb"
-version = "0.7.4"
+version = "0.9.2"
 
 [[deps.CountriesBorders]]
 deps = ["Artifacts", "CoordRefSystems", "GeoInterface", "GeoJSON", "GeoTables", "Meshes", "PrecompileTools", "Tables", "Unitful"]
-git-tree-sha1 = "63d985b99f3106a797229ed11121daae0c372d9a"
-repo-rev = "3de1813"
+git-tree-sha1 = "a12a8727a2622a4c0e8dee16ccab9a55814b5d60"
+repo-rev = "6908b71a014b61be78a46416883217231f5eb2e4"
 repo-url = "https://github.com/disberd/CountriesBorders.jl"
 uuid = "ee40d4b5-31c3-4fe2-b6cc-5ac7adf7f414"
-version = "0.3.0-dev"
+version = "0.3.3-DEV"
 weakdeps = ["PlotlyBase"]
 
     [deps.CountriesBorders.extensions]
@@ -369,9 +369,9 @@ version = "1.16.0"
 
 [[deps.DataScienceTraits]]
 deps = ["Dates"]
-git-tree-sha1 = "ffea2fbbaa503ad02a13183e2ef24bc1d0522b62"
+git-tree-sha1 = "d368beac33a4bae0d4b46bb28538e2e0c0cb4420"
 uuid = "6cb2f572-2d2b-4ba6-bdb3-e710fa044d6c"
-version = "0.3.2"
+version = "0.3.3"
 
     [deps.DataScienceTraits.extensions]
     DataScienceTraitsCategoricalArraysExt = "CategoricalArrays"
@@ -411,9 +411,9 @@ version = "0.1.2"
 
 [[deps.DelaunayTriangulation]]
 deps = ["EnumX", "ExactPredicates", "Random"]
-git-tree-sha1 = "1755070db557ec2c37df2664c75600298b0c1cfc"
+git-tree-sha1 = "078c716cbb032242df18b960e8b1fec6b1b0b9f9"
 uuid = "927a84f5-c5f4-47a5-9785-b46e178433df"
-version = "1.0.3"
+version = "1.0.5"
 
 [[deps.DelimitedFiles]]
 deps = ["Mmap"]
@@ -540,9 +540,9 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[deps.GPUArrays]]
 deps = ["Adapt", "GPUArraysCore", "LLVM", "LinearAlgebra", "Printf", "Random", "Reexport", "Serialization", "Statistics"]
-git-tree-sha1 = "c154546e322a9c73364e8a60430b0f79b812d320"
+git-tree-sha1 = "04661708f5301394a1f1be86a07a89e835900db6"
 uuid = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
-version = "10.2.0"
+version = "10.2.3"
 
 [[deps.GPUArraysCore]]
 deps = ["Adapt"]
@@ -557,15 +557,15 @@ version = "0.4.2"
 
 [[deps.GeoInterface]]
 deps = ["Extents"]
-git-tree-sha1 = "801aef8228f7f04972e596b09d4dba481807c913"
+git-tree-sha1 = "9fff8990361d5127b770e3454488360443019bb3"
 uuid = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
-version = "1.3.4"
+version = "1.3.5"
 
 [[deps.GeoInterfaceMakie]]
 deps = ["GeoInterface", "GeometryBasics", "MakieCore"]
-git-tree-sha1 = "b6c01b714e37cb6e5102f30544e8185a33f528c1"
+git-tree-sha1 = "3f87fd8414194dd25ea5d0371c3950985e3c8d86"
 uuid = "0edc0954-3250-4c18-859d-ec71c1660c08"
-version = "0.1.6"
+version = "0.1.8"
 
 [[deps.GeoInterfaceRecipes]]
 deps = ["GeoInterface", "RecipesBase"]
@@ -586,10 +586,10 @@ version = "0.8.1"
     Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [[deps.GeoTables]]
-deps = ["CategoricalArrays", "Colorfy", "ColumnSelectors", "CoordRefSystems", "DataAPI", "DataScienceTraits", "Dates", "Distributions", "Meshes", "PrettyTables", "Random", "Statistics", "Tables", "TransformsBase", "Unitful"]
-git-tree-sha1 = "65a4236a136ed4a26b7675d0adff82fee57783c6"
+deps = ["CategoricalArrays", "Colorfy", "ColumnSelectors", "CoordRefSystems", "DataAPI", "DataScienceTraits", "Dates", "Distributions", "IteratorInterfaceExtensions", "Meshes", "PrettyTables", "Random", "Statistics", "TableTraits", "Tables", "TransformsBase", "Unitful"]
+git-tree-sha1 = "89406b4fc078e665f23bae5e77ab53a662aad4b9"
 uuid = "e502b557-6362-48c1-8219-d30d308dcdb0"
-version = "1.21.4"
+version = "1.21.8"
 
     [deps.GeoTables.extensions]
     GeoTablesMakieExt = "Makie"
@@ -706,9 +706,9 @@ version = "1.14.0"
 
 [[deps.LLVM]]
 deps = ["CEnum", "LLVMExtra_jll", "Libdl", "Preferences", "Printf", "Requires", "Unicode"]
-git-tree-sha1 = "389aea28d882a40b5e1747069af71bdbd47a1cae"
+git-tree-sha1 = "020abd49586480c1be84f57da0017b5d3db73f7c"
 uuid = "929cbde3-209d-540e-8aea-75f648917ca0"
-version = "7.2.1"
+version = "8.0.0"
 
     [deps.LLVM.extensions]
     BFloat16sExt = "BFloat16s"
@@ -718,9 +718,9 @@ version = "7.2.1"
 
 [[deps.LLVMExtra_jll]]
 deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
-git-tree-sha1 = "88b916503aac4fb7f701bb625cd84ca5dd1677bc"
+git-tree-sha1 = "c2636c264861edc6d305e6b4d528f09566d24c5e"
 uuid = "dad2f222-ce93-54a1-a47d-0025e8a3acab"
-version = "0.0.29+0"
+version = "0.0.30+0"
 
 [[deps.LaTeXStrings]]
 git-tree-sha1 = "50901ebc375ed41dbf8058da26f9de442febbbec"
@@ -789,9 +789,9 @@ version = "0.5.13"
 
 [[deps.MakieCore]]
 deps = ["ColorTypes", "GeometryBasics", "IntervalSets", "Observables"]
-git-tree-sha1 = "638bc817096742e8302f7b0b972ee5701fe00e97"
+git-tree-sha1 = "c1c950560397ee68ad7302ee0e3efa1b07466a2f"
 uuid = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
-version = "0.8.3"
+version = "0.8.4"
 
 [[deps.Markdown]]
 deps = ["Base64"]
@@ -804,9 +804,9 @@ version = "2.28.2+1"
 
 [[deps.Meshes]]
 deps = ["Bessels", "CircularArrays", "Colorfy", "CoordRefSystems", "DelaunayTriangulation", "Distances", "LinearAlgebra", "NearestNeighbors", "Random", "Rotations", "SparseArrays", "StaticArrays", "StatsBase", "Transducers", "TransformsBase", "Unitful"]
-git-tree-sha1 = "47776e90515339969b562e357a7bf9fa04da831c"
+git-tree-sha1 = "8301d7cb334dc3c6cc56a57a4183031938d1eb07"
 uuid = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
-version = "0.45.0"
+version = "0.46.3"
 
     [deps.Meshes.extensions]
     MeshesMakieExt = "Makie"
@@ -855,9 +855,9 @@ uuid = "510215fc-4207-5dde-b226-833fc4488ee2"
 version = "0.5.5"
 
 [[deps.OffsetArrays]]
-git-tree-sha1 = "e64b4f5ea6b7389f6f046d13d4896a8f9c1ba71e"
+git-tree-sha1 = "1a27764e945a152f7ca7efa04de513d473e9542e"
 uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-version = "1.14.0"
+version = "1.14.1"
 weakdeps = ["Adapt"]
 
     [deps.OffsetArrays.extensions]
@@ -1081,9 +1081,9 @@ version = "0.1.15"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "6e00379a24597be4ae1ee6b2d882e15392040132"
+git-tree-sha1 = "eeafab08ae20c62c44c8399ccb9354a04b80db50"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.5"
+version = "1.9.7"
 weakdeps = ["ChainRulesCore", "Statistics"]
 
     [deps.StaticArrays.extensions]
