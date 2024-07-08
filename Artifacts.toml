@@ -1,6 +1,0 @@
-[ne_110m_admin_geojson]
-git-tree-sha1 = "ae580f90a56fb63c8bf44c9ada3d74da451ff3d6"
-
-    [[ne_110m_admin_geojson.download]]
-    sha256 = "c19437244246a59b039c3326938dac89101c7c42565cb9d75b2fbdc82036d7d4"
-    url = "https://github.com/disberd/CountriesBorders.jl/releases/download/v0.2.1/ne_110m_admin_geojson.tar.gz"

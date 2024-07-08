@@ -1,9 +1,9 @@
-valid_column_names() = setdiff(Tables.columnnames(get_default_geotable()), [:geometry, :featurecla, :scalerank])
+valid_column_names() = setdiff(Tables.columnnames(get_geotable()), [:geometry, :featurecla, :scalerank])
 
 possible_selector_values() = let
 	f(s) = replace(s, "\0" => "")
 	fields = (:ADMIN, :CONTINENT, :REGION_UN, :SUBREGION, :REGION_WB)
-	NamedTuple((k => unique(map(f,getproperty(get_default_geotable(), k))) for k in fields))
+	NamedTuple((k => unique(map(f,getproperty(get_geotable(), k))) for k in fields))
 end
 
 # Make a case-insensitive regexp from a string
@@ -136,7 +136,7 @@ rome = SimpleLatLon(41.9, 12.49) # Rome
 rome in dmn # This returns true
 ```
 """
-function extract_countries(geotable::GeoTables.GeoTable = get_default_geotable(), output_domain::Val{S} = Val{true}(); skip_areas = nothing, kwargs...) where S
+function extract_countries(geotable::GeoTables.GeoTable = get_geotable(), output_domain::Val{S} = Val{true}(); skip_areas = nothing, kwargs...) where S
 	downselection = falses(Tables.rowcount(geotable))
 	for (k, v) in kwargs
 		key = Symbol(uppercase(string(k)))
@@ -169,4 +169,4 @@ end
 # Method that just searches the admin column
 extract_countries(name::Union{AbstractString, Vector{<:AbstractString}}, output_domain::Val{S} = Val{true}();kwargs...) where S = extract_countries(output_domain;admin = name, kwargs...)
 # Method that provides just the Val
-extract_countries(output_domain::Val{S};kwargs...) where S = extract_countries(get_default_geotable(), output_domain; kwargs...)
+extract_countries(output_domain::Val{S};kwargs...) where S = extract_countries(get_geotable(), output_domain; kwargs...)
