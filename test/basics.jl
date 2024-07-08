@@ -1,5 +1,5 @@
 using CountriesBorders
-using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn
+using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn, get_geotable
 using Meshes
 using CoordRefSystems
 using Test
@@ -131,3 +131,6 @@ end
         @test p in dmn
     end
 end
+
+# We test that 50m resolution has more polygons than the default 110m one
+@test length(get_geotable(;resolution = 50).geometry) > length(get_geotable().geometry)
