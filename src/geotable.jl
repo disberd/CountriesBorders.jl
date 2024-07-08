@@ -8,9 +8,9 @@ function get_default_geotable_resolution()
         table, resolution = GEOTABLE_RESOLUTION[]
         return table, resolution
     else
-        admin_geojson = get_geotable(; resolution = 110)
-        table = GeoTablesConversion.asgeotable(admin_geojson, true)
-        set_geotable!(table, 110)
+        resolution = 110
+        table = get_geotable(; resolution)
+        set_geotable!(table, resolution)
         return table, resolution
     end
 end
