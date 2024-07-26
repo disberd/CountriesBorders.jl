@@ -23,7 +23,7 @@ PlotlyBaseExt = "PlotlyBase"
 
 [compat]
 Artifacts = "1"
-CoordRefSystems = "0.9"
+CoordRefSystems = "0.9, 0.10"
 GeoInterface = "1"
 GeoJSON = "0.8"
 GeoTables = "1"
