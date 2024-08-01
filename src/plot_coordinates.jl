@@ -36,9 +36,13 @@ geom_iterable(d::Domain) = d
 
 """
     extract_plot_coords(inp)
-Extract the lat and lon coordinates from the geometry/region `inp` and return them in a NamedTuple with fields `lat` and `lon` being vectors of `Float32` elements representing the lat/lon coordinates in degrees.
+Extract the lat and lon coordinates (in degrees) from the geometry/region `inp`
+and return them in a `@NamedTuple{lat::Vector{Float32}, lon::Vector{Float32}`.
 
-When `inp` is composed of multiple rings/polygons, the returned vectors `lat` and `lon` contain the concateneated lat/lon values of each ring separated by `NaN32` values. This is done to allow plotting multiple separated borders in a single trace.
+When `inp` is composed of multiple rings/polygons, the returned vectors `lat`
+and `lon` contain the concateneated lat/lon values of each ring separated by
+`NaN32` values. This is done to allow plotting multiple separated borders in a
+single trace.
 """
 function extract_plot_coords(inp::SimpleRegion)
     iterable = geom_iterable(inp)
