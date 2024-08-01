@@ -48,5 +48,5 @@ function extract_plot_coords(inp::Union{Multi{2, <:SimpleLatLon}, Domain{2, <:Si
             push!(lon, NaN32)
         end
 	end
-	(;lon,lat)
+	(;lat, lon)
 end
