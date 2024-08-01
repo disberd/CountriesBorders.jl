@@ -1,5 +1,5 @@
 using CountriesBorders
-using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn, get_geotable
+using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn, get_geotable, extract_plot_coords
 using Meshes
 using CoordRefSystems
 using Test
@@ -134,3 +134,9 @@ end
 
 # We test that 50m resolution has more polygons than the default 110m one
 @test length(get_geotable(;resolution = 50).geometry) > length(get_geotable().geometry)
+
+# We test that extract_plot_coords gives first lat and then lon
+@testset "Extract plot coords" begin
+    dmn = extract_countries("italy")
+    @test extract_plot_coords(dmn) isa @NamedTuple{lat::Vector{Float32}, lon::Vector{Float32}}
+end
