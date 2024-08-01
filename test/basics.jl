@@ -105,11 +105,11 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
     ≈(a,b) = Base.isapprox(a,b)
     sll_wgs = SimpleLatLon(10,20)
     ll_wgs = convert(LatLon{WGS84Latest}, sll_wgs)
-    ll_itrf = convert(LatLon{ITRF{2008}}, sll_wgs)
-    sll_itrf = convert(SimpleLatLon{ITRF{2008}}, ll_itrf)
-    ll_itrf2 = convert(LatLon{ITRF{2008}}, LatLon(10f0,20f0))
+    ll_itrf = convert(LatLon{ITRF{2020}}, sll_wgs)
+    sll_itrf = convert(SimpleLatLon{ITRF{2020}}, ll_itrf)
+    ll_itrf2 = convert(LatLon{ITRF{2020}}, LatLon(10f0,20f0))
     @test sll_itrf ≈ ll_itrf ≈ ll_itrf2
-    @test sll_itrf ≈ convert(SimpleLatLon{ITRF{2008}}, sll_wgs)
+    @test sll_itrf ≈ convert(SimpleLatLon{ITRF{2020}}, sll_wgs)
     rad = 1u"rad"
     @test SimpleLatLon(90,90) ≈ SimpleLatLon(π/2 * rad, π/2 * rad)
 
