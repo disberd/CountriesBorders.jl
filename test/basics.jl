@@ -1,5 +1,5 @@
 using CountriesBorders
-using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn, get_geotable
+using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn, get_geotable, extract_plot_coords
 using Meshes
 using CoordRefSystems
 using Test
@@ -105,11 +105,11 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
     ≈(a,b) = Base.isapprox(a,b)
     sll_wgs = SimpleLatLon(10,20)
     ll_wgs = convert(LatLon{WGS84Latest}, sll_wgs)
-    ll_itrf = convert(LatLon{ITRF{2008}}, sll_wgs)
-    sll_itrf = convert(SimpleLatLon{ITRF{2008}}, ll_itrf)
-    ll_itrf2 = convert(LatLon{ITRF{2008}}, LatLon(10f0,20f0))
+    ll_itrf = convert(LatLon{ITRF{2020}}, sll_wgs)
+    sll_itrf = convert(SimpleLatLon{ITRF{2020}}, ll_itrf)
+    ll_itrf2 = convert(LatLon{ITRF{2020}}, LatLon(10f0,20f0))
     @test sll_itrf ≈ ll_itrf ≈ ll_itrf2
-    @test sll_itrf ≈ convert(SimpleLatLon{ITRF{2008}}, sll_wgs)
+    @test sll_itrf ≈ convert(SimpleLatLon{ITRF{2020}}, sll_wgs)
     rad = 1u"rad"
     @test SimpleLatLon(90,90) ≈ SimpleLatLon(π/2 * rad, π/2 * rad)
 
@@ -134,3 +134,9 @@ end
 
 # We test that 50m resolution has more polygons than the default 110m one
 @test length(get_geotable(;resolution = 50).geometry) > length(get_geotable().geometry)
+
+# We test that extract_plot_coords gives first lat and then lon
+@testset "Extract plot coords" begin
+    dmn = extract_countries("italy")
+    @test extract_plot_coords(dmn) isa @NamedTuple{lat::Vector{Float32}, lon::Vector{Float32}}
+end

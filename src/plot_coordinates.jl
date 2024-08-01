@@ -34,7 +34,17 @@ end
 geom_iterable(pa::Union{Multi, PolyArea}) = rings(pa)
 geom_iterable(d::Domain) = d
 
-function extract_plot_coords(inp::Union{Multi{2, <:SimpleLatLon}, Domain{2, <:SimpleLatLon}, PolyArea{2, <:SimpleLatLon}})
+"""
+    extract_plot_coords(inp)
+Extract the lat and lon coordinates (in degrees) from the geometry/region `inp`
+and return them in a `@NamedTuple{lat::Vector{Float32}, lon::Vector{Float32}`.
+
+When `inp` is composed of multiple rings/polygons, the returned vectors `lat`
+and `lon` contain the concateneated lat/lon values of each ring separated by
+`NaN32` values. This is done to allow plotting multiple separated borders in a
+single trace.
+"""
+function extract_plot_coords(inp::SimpleRegion)
     iterable = geom_iterable(inp)
     length(iterable) == 1 && return extract_plot_coords(first(iterable))
 	lon = Float32[]
@@ -48,5 +58,5 @@ function extract_plot_coords(inp::Union{Multi{2, <:SimpleLatLon}, Domain{2, <:Si
             push!(lon, NaN32)
         end
 	end
-	(;lon,lat)
+	(;lat, lon)
 end
