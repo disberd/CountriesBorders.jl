@@ -32,7 +32,7 @@ SOFTWARE.
 
 # Part from https://github.com/JuliaEarth/GeoIO.jl/blob/8c0eb84223ecf8a8601850f8b7cc27f81a18d68c/src/conversion.jl.
 function topoints(geom)
-    [SimpleLatLon(GI.y(p), GI.x(p)) |> Point for p in GI.getpoint(geom)]
+    [LatLon(GI.y(p), GI.x(p)) |> Point for p in GI.getpoint(geom)]
 end
 
 function tochain(geom)
@@ -73,29 +73,13 @@ geom2meshes(trait::Union{GI.MultiPolygonTrait,GI.PolygonTrait}, geom) = _convert
 # Licensed under the MIT License. See LICENSE in the project root.
 # ------------------------------------------------------------------
 
-function asgeotable(table, fix)
+function asgeotable(table)
   cols = Tables.columns(table)
   names = Tables.columnnames(cols)
-  gcol = geomcolumn(names)
+  gcol = :geometry
   vars = setdiff(names, [gcol])
   table = isempty(vars) ? nothing : (; (v => Tables.getcolumn(cols, v) for v in vars)...)
   geoms = Tables.getcolumn(cols, gcol)
-  domain = GeometrySet(geom2meshes.(geoms, fix))
+  domain = GeometrySet(geom2meshes.(geoms))
   georef(table, domain)
-end
-
-# helper function to find the
-# geometry column of a table
-function geomcolumn(names)
-  snames = string.(names)
-  gnames = ["geometry", "geom", "shape"]
-  gnames = [gnames; uppercasefirst.(gnames)]
-  gnames = [gnames; uppercase.(gnames)]
-  gnames = [gnames; [""]]
-  select = findfirst(∈(snames), gnames)
-  if isnothing(select)
-    throw(ErrorException("geometry column not found"))
-  else
-    Symbol(gnames[select])
-  end
 end

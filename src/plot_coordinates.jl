@@ -1,9 +1,9 @@
 # Extracting lat/lon coordaintes of the borders
-function extract_plot_coords(sll::SimpleLatLon)
+function extract_plot_coords(sll::LatLon)
     (;lat, lon) = sll
     out = map(Float32 ∘ ustrip, (;lat, lon))
 end
-function extract_plot_coords(v::Vector{<:SimpleLatLon})
+function extract_plot_coords(v::Vector{<:LatLon})
     nelem = length(v)
     lat = Vector{Float32}(undef, nelem)
     lon = Vector{Float32}(undef, nelem)
@@ -15,7 +15,7 @@ function extract_plot_coords(v::Vector{<:SimpleLatLon})
     return (;lat, lon)
 end
 
-function extract_plot_coords(ring::Ring{2, <:SimpleLatLon})
+function extract_plot_coords(ring::Ring{🌐, <:LatLon})
     nelem = nvertices(ring)
     lat = Vector{Float32}(undef, nelem)
     lon = Vector{Float32}(undef, nelem)
