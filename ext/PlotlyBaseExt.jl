@@ -1,6 +1,6 @@
 module PlotlyBaseExt
 using PlotlyBase
-using CountriesBorders: Multi, Domain, PolyArea, extract_plot_coords, LatLon, SimpleRegion
+using CountriesBorders: Multi, Domain, PolyArea, extract_plot_coords, LatLon, SimpleRegion, 🌐, Point
 
 function PlotlyBase.scattergeo(p::SimpleRegion; kwargs...)
 	(;lon, lat) = extract_plot_coords(p)
@@ -8,7 +8,7 @@ function PlotlyBase.scattergeo(p::SimpleRegion; kwargs...)
 end
 
 # This is type piracy so it should be removed probably
-function PlotlyBase.scattergeo(ps::Vector{<:LatLon}; kwargs...)
+function PlotlyBase.scattergeo(ps::Vector{<:Union{LatLon, Point{🌐, <:LatLon}}}; kwargs...)
 	(;lon, lat) = extract_plot_coords(ps)
 	scattergeo(; lat, lon, kwargs...)
 end

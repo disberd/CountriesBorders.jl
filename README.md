@@ -17,9 +17,9 @@ using CountriesBorders
 dmn = extract_countries("italy; spain")
 
 # Creates two variables containint the lat/lon coordinates of Rome, Madrid and Paris. SimpleLatLon is exported by CountriesBorders
-rome = SimpleLatLon(41.9, 12.49)
-paris = SimpleLatLon(48.864, 2.349)
-madrid = SimpleLatLon(40.416, -3.703)
+rome = Point(LatLon(41.9, 12.49))
+paris = Point(LatLon(48.864, 2.349))
+madrid = Point(LatLon(40.416, -3.703))
 
 # Verify that rome and madrid are included in the domain
 rome in dmn # Returns true
