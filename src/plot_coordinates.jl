@@ -4,7 +4,7 @@ function extract_plot_coords(sll::LatLon)
     out = map(Float32 ∘ ustrip, (;lat, lon))
 end
 extract_plot_coords(p::Point{🌐, <:LatLon}) = extract_plot_coords(coords(p))
-function extract_plot_coords(v::Vector{<:LatLon})
+function extract_plot_coords(v::Vector{<:Union{LatLon, Point{🌐, <:LatLon}}})
     nelem = length(v)
     lat = Vector{Float32}(undef, nelem)
     lon = Vector{Float32}(undef, nelem)
@@ -15,7 +15,6 @@ function extract_plot_coords(v::Vector{<:LatLon})
     end
     return (;lat, lon)
 end
-extract_plot_coords(ps::Vector{<:Point{🌐, <:LatLon}}) = extract_plot_coords(map(coords, ps))
 
 function extract_plot_coords(ring::Ring{🌐, <:LatLon})
     nelem = nvertices(ring)

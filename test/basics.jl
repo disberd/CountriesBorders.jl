@@ -99,4 +99,6 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
 @testset "Extract plot coords" begin
     dmn = extract_countries("italy")
     @test extract_plot_coords(dmn) isa @NamedTuple{lat::Vector{Float32}, lon::Vector{Float32}}
+    ps = rand(Point, 100; crs = LatLon)
+    @test extract_plot_coords(ps) == extract_plot_coords(coords.(ps))
 end
