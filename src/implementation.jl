@@ -1,10 +1,11 @@
 valid_column_names() = setdiff(Tables.columnnames(get_geotable()), [:geometry, :featurecla, :scalerank])
 
-possible_selector_values() = let
-	f(s) = replace(s, "\0" => "")
-	fields = (:ADMIN, :CONTINENT, :REGION_UN, :SUBREGION, :REGION_WB)
-	NamedTuple((k => unique(map(f,getproperty(get_geotable(), k))) for k in fields))
-end
+possible_selector_values() =
+    let
+        f(s) = replace(s, "\0" => "")
+        fields = (:ADMIN, :CONTINENT, :REGION_UN, :SUBREGION, :REGION_WB)
+        NamedTuple((k => unique(map(f, getproperty(get_geotable(), k))) for k in fields))
+    end
 
 # Make a case-insensitive regexp from a string
 function _to_regexp(s::AbstractString)
@@ -22,7 +23,7 @@ end
 # Transforms string or regexps in a vector of regexps
 function _process_input(s::String)
     # Try to see if there are multiple inputs (separated by ;)
-    inputs = filter(!isempty,split(s,";"))
+    inputs = filter(!isempty, split(s, ";"))
     map(_to_regexp, inputs)
 end
 _process_input(v::Array) = vcat(map(_process_input, v)...)
@@ -30,26 +31,26 @@ _process_input(v::Array) = vcat(map(_process_input, v)...)
 # This function removes from the domain the areas specified in the SkipDict
 function process_domain!(subset::GeoTables.SubGeoTable, sd::SkipDict)
     dmn = domain(subset)
-	removed_idx = falses(length(dmn))
-	isempty(removed_idx) && return dmn
-	for (admin, s) in sd
-		idx = findfirst(startswith(admin), subset.ADMIN)
-		isnothing(idx) && continue
-		geom = dmn[idx]
+    removed_idx = falses(length(dmn))
+    isempty(removed_idx) && return dmn
+    for (admin, s) in sd
+        idx = findfirst(startswith(admin), subset.ADMIN)
+        isnothing(idx) && continue
+        geom = dmn[idx]
         geoms = geom isa Multi ? parent(geom) : [geom]
-		if skipall(s) || length(geoms) == length(s.idxs)
-			removed_idx[idx] = true
-		else
-			name = admin
-			lg = length(geoms)
-			mi = maximum(s.idxs)
-			@assert mi <= lg "The provided idxs to remove from '$name' have at laset one idx ($mi) which is greater than the number of PolyAreas associated to '$name' ($lg PolyAreas)"
-			deleteat!(geoms, s.idxs)
-		end
-	end
-	all(removed_idx) && @warn "Some countries were downselected but have been removed based on the contents of the `skip_area` keyword argument."
-	deleteat!(dmn.inds, removed_idx)
-	return nothing
+        if skipall(s) || length(geoms) == length(s.idxs)
+            removed_idx[idx] = true
+        else
+            name = admin
+            lg = length(geoms)
+            mi = maximum(s.idxs)
+            @assert mi <= lg "The provided idxs to remove from '$name' have at laset one idx ($mi) which is greater than the number of PolyAreas associated to '$name' ($lg PolyAreas)"
+            deleteat!(geoms, s.idxs)
+        end
+    end
+    all(removed_idx) && @warn "Some countries were downselected but have been removed based on the contents of the `skip_area` keyword argument."
+    deleteat!(dmn.inds, removed_idx)
+    return nothing
 end
 
 ## extract_countries ##
@@ -119,54 +120,70 @@ The provided elements will be merged into a single list of countries/areas to sk
 A default set of Non-continental EU areas to skip is available in the exported constant `SKIP_NONCONTINENTAL_EU` which can be passed as the `skip_areas` argument (or as one of the elements of the array passed to `skip_areas`).
 
 ### Example
-```julia 
-# The following code will extract the borders of Italy, France and Norway without French Guyana (part of France), without Sicily, and without the Svalbard Islands (part of Norway)
-dmn = extract_countries("italy; spain; france; norway"; skip_areas = [
-	("Italy", 2) # This removes the second polygon in the Italy MultiPolyArea, which corresponds to Sicily
-	"Spain" # This will remove Spain in its entirety
-	SKIP_NONCONTINENTAL_EU # This will remove Svalbard and French Guyana
-])
+```jldoctest 
+julia> using CountriesBorders
 
-catania = SimpleLatLon(37.5, 15.09) # Location of Catania, Sicily
+julia> dmn = let
+        # The following code will extract the borders of Italy, France and Norway without French Guyana (part of France), without Sicily, and without the Svalbard Islands (part of Norway)
+        extract_countries("italy; spain; france; norway"; skip_areas = [
+            ("Italy", 2) # This removes the second polygon in the Italy MultiPolyArea, which corresponds to Sicily
+            "Spain" # This will remove Spain in its entirety
+            SKIP_NONCONTINENTAL_EU # This will remove Svalbard and French Guyana
+        ])
+       end
+3 view(::GeometrySet, [22, 44, 142])
+├─ Multi(1×PolyArea)
+├─ Multi(2×PolyArea)
+└─ Multi(2×PolyArea)
 
-catania in dmn # This returns false, as sicily is excluded from the domain
+julia> catania = LatLon(37.5, 15.09) # Location of Catania, Sicily
+GeodeticLatLon{WGS84Latest} coordinates
+├─ lat: 37.5°
+└─ lon: 15.09°
 
-rome = SimpleLatLon(41.9, 12.49) # Rome
+julia> Point(catania) in dmn # This returns false, as sicily is excluded from the domain
+false
 
-rome in dmn # This returns true
+julia> rome = LatLon(41.9, 12.49) # Rome
+GeodeticLatLon{WGS84Latest} coordinates
+├─ lat: 41.9°
+└─ lon: 12.49°
+
+julia> Point(rome) in dmn # This returns true
+true
 ```
 """
-function extract_countries(geotable::GeoTables.GeoTable = get_geotable(), output_domain::Val{S} = Val{true}(); skip_areas = nothing, kwargs...) where S
-	downselection = falses(Tables.rowcount(geotable))
-	for (k, v) in kwargs
-		key = Symbol(uppercase(string(k)))
-		r_vec = try
-			_process_input(v)
-		catch
-			error("The kwarg values have to be provided as String or Vector{String}")
-		end
-		for (remove_from_list, regex) in r_vec
-			col_vals = map(getproperty(geotable, key)) do str
-				match(regex, replace(str, "\0" => "")) !== nothing
-			end
-			downselection[col_vals] .= remove_from_list ? false : true
-		end
-	end
-	if any(downselection)
+function extract_countries(geotable::GeoTables.GeoTable=get_geotable(), output_domain::Val{S}=Val{true}(); skip_areas=nothing, kwargs...) where {S}
+    downselection = falses(Tables.rowcount(geotable))
+    for (k, v) in kwargs
+        key = Symbol(uppercase(string(k)))
+        r_vec = try
+            _process_input(v)
+        catch
+            error("The kwarg values have to be provided as String or Vector{String}")
+        end
+        for (remove_from_list, regex) in r_vec
+            col_vals = map(getproperty(geotable, key)) do str
+                match(regex, replace(str, "\0" => "")) !== nothing
+            end
+            downselection[col_vals] .= remove_from_list ? false : true
+        end
+    end
+    if any(downselection)
         geotable = deepcopy(geotable)
         idxs = findall(downselection)
         subset = GeoTables.SubGeoTable(geotable, idxs)
         # We extract the domain directly to modify it in case skip_areas are provided
-		if skip_areas !== nothing
-			sd = mergeSkipDict(skip_areas)
-			process_domain!(subset, sd)
-		end
-		return S ? domain(subset) : subset
-	else
-		return nothing
-	end
+        if skip_areas !== nothing
+            sd = mergeSkipDict(skip_areas)
+            process_domain!(subset, sd)
+        end
+        return S ? domain(subset) : subset
+    else
+        return nothing
+    end
 end
 # Method that just searches the admin column
-extract_countries(name::Union{AbstractString, Vector{<:AbstractString}}, output_domain::Val{S} = Val{true}();kwargs...) where S = extract_countries(output_domain;admin = name, kwargs...)
+extract_countries(name::Union{AbstractString,Vector{<:AbstractString}}, output_domain::Val{S}=Val{true}(); kwargs...) where {S} = extract_countries(output_domain; admin=name, kwargs...)
 # Method that provides just the Val
-extract_countries(output_domain::Val{S};kwargs...) where S = extract_countries(get_geotable(), output_domain; kwargs...)
+extract_countries(output_domain::Val{S}; kwargs...) where {S} = extract_countries(get_geotable(), output_domain; kwargs...)
