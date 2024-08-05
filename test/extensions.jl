@@ -3,6 +3,7 @@ using CountriesBorders: extract_plot_coords
 using CountriesBorders.Unitful
 using CountriesBorders.Meshes
 using PlotlyBase
+using Test
 
 @testset "Region" begin
 
@@ -38,6 +39,6 @@ end
 
     sg = cities |> scattergeo
 
-    @test sg.lat == map(x -> x.lat |> ustrip, cities)
-    @test sg.lon == map(x -> x.lon |> ustrip, cities)
+    @test sg.lat == map(x -> x.lat |> ustrip |> Float32, cities)
+    @test sg.lon == map(x -> x.lon |> ustrip |> Float32, cities)
 end
