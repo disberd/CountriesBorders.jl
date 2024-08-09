@@ -81,8 +81,8 @@ function asgeotable(table)
   table = isempty(vars) ? nothing : (; (v => Tables.getcolumn(cols, v) for v in vars)...)
   geoms = Tables.getcolumn(cols, gcol)
   admins = Tables.getcolumn(cols, :ADMIN)
-  countries = map(geoms, admins) do geom, admin
-    CountryBorder(admin, geom2meshes(geom))
+  countries = map(geoms, admins, eachindex(geoms)) do geom, admin, idx
+    CountryBorder(admin, geom2meshes(geom), idx)
   end
   domain = GeometrySet(countries)
   georef(table, domain)

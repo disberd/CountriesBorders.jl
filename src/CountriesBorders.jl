@@ -11,6 +11,7 @@ using Unitful: Unitful, ustrip
 using PrecompileTools
 using NaturalEarth: NaturalEarth, naturalearth
 using CoordRefSystems
+using CoordRefSystems: Deg
 
 export extract_countries, SKIP_NONCONTINENTAL_EU, SkipFromAdmin, SimpleLatLon, LatLon, Point
 export CountryBorder
@@ -27,6 +28,7 @@ const SimpleRegion{Datum, D} = Union{PolyArea{ğŸŒ, LatLon{Datum, D}}, Multi{ğŸŒ
 
 include("conversions.jl")
 include("geotable.jl")
+include("meshes_interface.jl")
 include("skip_polyarea.jl")
 include("implementation.jl")
 include("plot_coordinates.jl")
