@@ -13,6 +13,7 @@ using NaturalEarth: NaturalEarth, naturalearth
 using CoordRefSystems
 
 export extract_countries, SKIP_NONCONTINENTAL_EU, SkipFromAdmin, SimpleLatLon, LatLon, Point
+export CountryBorder
 
 function SimpleLatLon(args...)
     #! format: off
@@ -23,18 +24,8 @@ The package internally now relies on LatLon from CoordRefSystems directly, so yo
     return LatLon(args...)
 end
 const SimpleRegion{Datum, D} = Union{PolyArea{🌐, LatLon{Datum, D}}, Multi{🌐, LatLon{Datum, D}}, Domain{🌐, LatLon{Datum, D}}}
-module GeoTablesConversion
-    using Meshes
-    using GeoTables
-    using Tables
-    import GeoInterface as GI
-    using CoordRefSystems
-    using Unitful
 
-    include("conversion_utils.jl")
-end
-
-
+include("conversions.jl")
 include("geotable.jl")
 include("skip_polyarea.jl")
 include("implementation.jl")

@@ -80,6 +80,10 @@ function asgeotable(table)
   vars = setdiff(names, [gcol])
   table = isempty(vars) ? nothing : (; (v => Tables.getcolumn(cols, v) for v in vars)...)
   geoms = Tables.getcolumn(cols, gcol)
-  domain = GeometrySet(geom2meshes.(geoms))
+  admins = Tables.getcolumn(cols, :ADMIN)
+  countries = map(geoms, admins) do geom, admin
+    CountryBorder(admin, geom2meshes(geom))
+  end
+  domain = GeometrySet(countries)
   georef(table, domain)
 end
