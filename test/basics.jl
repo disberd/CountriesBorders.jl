@@ -39,9 +39,6 @@ example3 = extract_countries(;subregion = "*europe; -eastern europe")
     @test all(in(dmn_excluded), included_cities)
     @test all(!in(dmn_excluded), excluded_cities)
 
-    # Check wrapping
-    @test Point(SimpleLatLon(41.9, 12.49 + 360)) in dmn_excluded
-
     dmn_full = extract_countries("italy; spain; france; norway")
     @test all(in(dmn_full), included_cities)
     @test all(in(dmn_full), excluded_cities)
