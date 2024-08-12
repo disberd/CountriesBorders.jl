@@ -1,11 +1,14 @@
 const LATLON{T} = LatLon{WGS84Latest,Deg{T}}
 const CART{T} = Cartesian2D{WGS84Latest,Met{T}}
+const VALID_CRS = Union{LATLON, CART}
 
 const POINT_LATLON{T} = Point{🌐, LATLON{T}}
 const POINT_CART{T} = Point{𝔼{2}, CART{T}}
+const VALID_POINT = Union{POINT_LATLON, POINT_CART}
 
 const RING_LATLON{T} = Ring{🌐, LATLON{T}, CircularArray{POINT_LATLON{T}, 1, Vector{POINT_LATLON{T}}}}
 const RING_CART{T} = Ring{𝔼{2}, CART{T}, CircularArray{POINT_CART{T}, 1, Vector{POINT_CART{T}}}}
+const VALID_RING = Union{RING_LATLON, RING_CART}
 
 const POLY_LATLON{T} = PolyArea{🌐, LATLON{T}, RING_LATLON{T}, Vector{RING_LATLON{T}}}
 const POLY_CART{T} = PolyArea{𝔼{2}, CART{T}, RING_CART{T}, Vector{RING_CART{T}}}

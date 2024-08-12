@@ -16,17 +16,11 @@ using CoordRefSystems: Deg
 export extract_countries, SKIP_NONCONTINENTAL_EU, SkipFromAdmin, SimpleLatLon, LatLon, Point
 export CountryBorder
 
-function SimpleLatLon(args...)
-    #! format: off
-@warn "The use of SimpleLatLon is deprecated since v0.4.0 of CountriesBorders.
-The package internally now relies on LatLon from CoordRefSystems directly, so you should use that instead.
-"
-    #! format: on
-    return LatLon(args...)
-end
-const SimpleRegion{Datum, D} = Union{PolyArea{🌐, LatLon{Datum, D}}, Multi{🌐, LatLon{Datum, D}}, Domain{🌐, LatLon{Datum, D}}}
-
 include("conversions.jl")
+
+const SimpleLatLon = LatLon
+const RegionBorders{T} = Union{CountryBorder{T}, DOMAIN{T}}
+
 include("geotable.jl")
 include("meshes_interface.jl")
 include("skip_polyarea.jl")
