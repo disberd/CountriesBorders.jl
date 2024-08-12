@@ -29,7 +29,7 @@ example3 = extract_countries(;subregion = "*europe; -eastern europe")
         LatLon(40.416, -3.703) # Madrid
         LatLon(5.212, -52.773) # Guiana Space Center
         LatLon(78.222, 15.652) # Svalbard Museum
-    ] .|> Point
+    ]
 
     dmn_excluded = extract_countries("italy; spain; france; norway"; skip_areas = [
         ("Italy", 2)

@@ -26,6 +26,8 @@ Meshes.simplexify(cb::CountryBorder) = simplexify(Cartesian, cb)
 Meshes.pointify(crs::VALID_CRS, cb::CountryBorder) = pointify(borders(crs, cb))
 Meshes.pointify(cb::CountryBorder) = pointify(Cartesian, cb)
 
+Meshes.convexhull(m::CountryBorder) = convexhull(borders(Cartesian, m))
+
 # Base methods
 Base.parent(cb::CountryBorder) = parent(LatLon, cb)
 Base.parent(crs::VALID_CRS, cb::CountryBorder) = parent(borders(crs, cb))
