@@ -16,7 +16,7 @@ function _to_regexp(s::AbstractString)
         pattern = startswith(s, "+") ? s[2:end] : s
         false, pattern
     end
-    pattern = replace(pattern, "*" => "[\\w\\s]*")
+    pattern = replace(pattern, "*" => "[\\w\\s-]*")
     pattern = "^$pattern\$"
     return minus_flag, Regex(pattern, 0x040a000a, 0x40000000)
 end

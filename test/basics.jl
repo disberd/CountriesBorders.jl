@@ -59,6 +59,10 @@ valid_column_names()
 # Test that extract_countries returns nothing if no matching country is found
 @test extract_countries("IDFSDF") === nothing
 
+# We test that "*" selects all countries
+dmn = extract_countries("*")
+@test length(dmn) == length(parent(dmn))
+
 # skip_polyarea coverage
 sfa1 = SkipFromAdmin("France", :)
 sfa2 = SkipFromAdmin("France", 1)
