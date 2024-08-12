@@ -1,5 +1,5 @@
 using CountriesBorders
-using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, get_geotable, extract_plot_coords
+using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, get_geotable, extract_plot_coords, borders, remove_polyareas!, floattype, npolyareas
 using Meshes
 using CoordRefSystems
 using Test
@@ -98,4 +98,29 @@ merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
     @test extract_plot_coords(dmn) isa @NamedTuple{lat::Vector{Float32}, lon::Vector{Float32}}
     ps = rand(Point, 100; crs = LatLon)
     @test extract_plot_coords(ps) == extract_plot_coords(coords.(ps))
+
+    # Test that cart also works
+    italy = extract_countries("italy") |> only
+    v1 = extract_plot_coords(italy) 
+    v2 = extract_plot_coords(borders(Cartesian, italy))
+    for s in (:lat, :lon)
+        a1 = getfield(v1, s)
+        a2 = getfield(v2, s)
+        f(x,y) = (isnan(x) && isnan(y)) || x == y
+        @test all(x -> f(x...), zip(a1, a2))
+    end
+end
+
+@testset "Misc coverage" begin
+    italy = extract_countries("italy") |> only
+    @test npolyareas(italy) == 3
+    remove_polyareas!(italy, 1)
+    @test npolyareas(italy) == 2
+    @test_logs (:info, r"has already been removed") remove_polyareas!(italy, 1)
+
+    @test floattype(italy) == Float32
+
+    # Show methods
+    @test sprint(summary, italy) == "Italy Borders"
+    @test contains(sprint(show, MIME"text/plain"(), italy), ", 1 skipped")
 end
