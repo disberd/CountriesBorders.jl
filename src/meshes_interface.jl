@@ -14,6 +14,7 @@ resolution(d::DOMAIN) = resolution(element(d, 1))
 
 polyareas(crs::VALID_CRS, cb::CountryBorder) = parent(borders(crs, cb))
 polyareas(cb::CountryBorder) = polyareas(Cartesian, cb)
+npolyareas(cb::CountryBorder) = length(polyareas(cb))
 
 
 # LatLon fallbacks
