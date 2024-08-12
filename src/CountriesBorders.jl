@@ -2,7 +2,7 @@ module CountriesBorders
 
 using GeoTables
 using Meshes
-using Meshes: 🌐
+using Meshes: 🌐, printelms
 using GeoInterface
 using Tables
 using GeoJSON
