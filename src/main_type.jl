@@ -1,6 +1,5 @@
 const LATLON{T} = LatLon{WGS84Latest,Deg{T}}
 const CART{T} = Cartesian2D{WGS84Latest,Met{T}}
-const VALID_CRS = Union{LATLON, CART}
 
 const POINT_LATLON{T} = Point{🌐, LATLON{T}}
 const POINT_CART{T} = Point{𝔼{2}, CART{T}}

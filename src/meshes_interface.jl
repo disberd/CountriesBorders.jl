@@ -27,6 +27,9 @@ Meshes.pointify(crs::VALID_CRS, cb::CountryBorder) = pointify(borders(crs, cb))
 Meshes.pointify(cb::CountryBorder) = pointify(Cartesian, cb)
 
 # Base methods
+Base.parent(cb::CountryBorder) = parent(LatLon, cb)
+Base.parent(crs::VALID_CRS, cb::CountryBorder) = parent(borders(crs, cb))
+
 Base.in(p::Point{𝔼{2}, <:Cartesian2D{WGS84Latest}}, cb::CountryBorder) = in(p, borders(Cartesian, cb))
 Base.in(p::Point{🌐, <:LatLon{WGS84Latest}}, cb::CountryBorder) = in(Meshes.flat(p), cb)
 Base.in(p::LatLon, cb::CountryBorder) = in(Point(LatLon{WGS84Latest, Deg{Float32}}(p.lat, p.lon)), cb)
