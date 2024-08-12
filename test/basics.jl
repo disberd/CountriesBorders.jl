@@ -113,6 +113,7 @@ end
 
 @testset "Misc coverage" begin
     italy = extract_countries("italy") |> only
+    @test LatLon(41.9, 12.49) in italy
     @test npolyareas(italy) == 3
     remove_polyareas!(italy, 1)
     @test npolyareas(italy) == 2

@@ -21,7 +21,7 @@ const MULTI_CART{T} = Multi{𝔼{2}, CART{T}, POLY_CART{T}}
 Structure representings the coordinates of the borders of a country (based on the NaturalEarth database). 
 `T` is the floating point precision of the borders coordinates, and defaults to Float32.
 
-This 
+This structure holds the borders in both LatLon and Cartesian2D, to allow faster comparison with flattening approximation of the LatLon coordinates.
 
 # Fields
 
