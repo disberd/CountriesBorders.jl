@@ -36,16 +36,11 @@ function process_domain!(subset::GeoTables.SubGeoTable, sd::SkipDict)
     for (admin, s) in sd
         idx = findfirst(startswith(admin), subset.ADMIN)
         isnothing(idx) && continue
-        geom = dmn[idx]
-        geoms = geom isa Multi ? parent(geom) : [geom]
-        if skipall(s) || length(geoms) == length(s.idxs)
+        cb = dmn[idx]
+        if skipall(s)
             removed_idx[idx] = true
         else
-            name = admin
-            lg = length(geoms)
-            mi = maximum(s.idxs)
-            @assert mi <= lg "The provided idxs to remove from '$name' have at laset one idx ($mi) which is greater than the number of PolyAreas associated to '$name' ($lg PolyAreas)"
-            deleteat!(geoms, s.idxs)
+            remove_polyareas!(cb, s.idxs)
         end
     end
     all(removed_idx) && @warn "Some countries were downselected but have been removed based on the contents of the `skip_area` keyword argument."
@@ -131,10 +126,10 @@ julia> dmn = let
             SKIP_NONCONTINENTAL_EU # This will remove Svalbard and French Guyana
         ])
        end
-3 view(::GeometrySet, [22, 44, 142])
-├─ Multi(1×PolyArea)
-├─ Multi(2×PolyArea)
-└─ Multi(2×PolyArea)
+3 view(::GeometrySet{CountryBorder{Float32}}, resolution = 110m, [22, 44, 142])
+├─ Norway (3 skipped)
+├─ France (1 skipped)
+└─ Italy (1 skipped)
 
 julia> catania = LatLon(37.5, 15.09) # Location of Catania, Sicily
 GeodeticLatLon{WGS84Latest} coordinates

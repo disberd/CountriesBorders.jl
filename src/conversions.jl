@@ -9,7 +9,7 @@ module GeoTablesConversion
     using CoordRefSystems: Deg, Met
     using Unitful
 
-    export CountryBorder, borders, DOMAIN, remove_polyareas!
+    export CountryBorder, borders, DOMAIN, remove_polyareas!, npolyareas
 
     include("main_type.jl")
     include("conversion_utils.jl")

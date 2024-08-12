@@ -89,6 +89,8 @@ borders(cb::CountryBorder) = borders(LatLon, cb)
 resolution(cb::CountryBorder) = cb.resolution
 resolution(d::GSET) = resolution(element(d, 1))
 
+npolyareas(cb::CountryBorder) = sum(cb.valid_polyareas)
+
 # Meshes/Base methods overloads #
 Meshes.paramdim(cb::CountryBorder) = paramdim(cb.latlon)
 
@@ -112,7 +114,7 @@ function Base.show(io::IO, cb::CountryBorder)
     end
 end
 
-function Base.show(io::IO, mime::MIME"text/plain", cb::CountryBorder)
+function Base.show(io::IO, ::MIME"text/plain", cb::CountryBorder)
     (; admin, valid_polyareas, latlon) = cb
     print(io, admin)
     print(io, ", $(floattype(cb)), $(resolution(cb))m")
