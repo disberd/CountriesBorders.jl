@@ -73,7 +73,7 @@ geom2meshes(trait::Union{GI.MultiPolygonTrait,GI.PolygonTrait}, geom) = _convert
 # Licensed under the MIT License. See LICENSE in the project root.
 # ------------------------------------------------------------------
 
-function asgeotable(table)
+function asgeotable(table; resolution)
   cols = Tables.columns(table)
   names = Tables.columnnames(cols)
   gcol = :geometry
@@ -81,8 +81,8 @@ function asgeotable(table)
   table = isempty(vars) ? nothing : (; (v => Tables.getcolumn(cols, v) for v in vars)...)
   geoms = Tables.getcolumn(cols, gcol)
   admins = Tables.getcolumn(cols, :ADMIN)
-  countries = map(geoms, admins, eachindex(geoms)) do geom, admin, idx
-    CountryBorder(admin, geom2meshes(geom), idx)
+  countries = map(geoms, admins, eachindex(geoms)) do geom, admin, table_idx
+    CountryBorder(admin, geom2meshes(geom); table_idx, resolution)
   end
   domain = GeometrySet(countries)
   georef(table, domain)

@@ -23,6 +23,6 @@ function get_geotable(; resolution = nothing, force = false, kwargs...)
     end
     resolution = Int(resolution)
     admin_geojson = naturalearth("admin_0_countries_lakes", resolution)
-    table = GeoTablesConversion.asgeotable(admin_geojson)
+    table = GeoTablesConversion.asgeotable(admin_geojson; resolution)
     return table
 end

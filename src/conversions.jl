@@ -1,6 +1,6 @@
 module GeoTablesConversion
     using Meshes
-    using Meshes: Geometry, Manifold, CRS, 🌐, Multi, 𝔼, Point, prettyname, printinds, MultiPolygon
+    using Meshes: Geometry, Manifold, CRS, 🌐, Multi, 𝔼, Point, prettyname, printinds, MultiPolygon, printelms
     using CircularArrays: CircularArray
     using GeoTables
     using Tables
@@ -9,7 +9,7 @@ module GeoTablesConversion
     using CoordRefSystems: Deg, Met
     using Unitful
 
-    export CountryBorder, borders, DOMAIN
+    export CountryBorder, borders, DOMAIN, remove_polyareas!
 
     include("main_type.jl")
     include("conversion_utils.jl")

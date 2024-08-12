@@ -18,16 +18,53 @@ struct CountryBorder{T} <: Geometry{🌐,LATLON{T}}
     admin::String
     "The index of the country in the original GeoTable"
     table_idx::Int
+    "Indices of skipped PolyAreas in the original MultiPolygon of the country"
+    valid_polyareas::BitVector
+    "The resolution of the underlying border sampling from the NaturalEarth dataset"
+    resolution::Int
     "The borders in LatLon CRS"
     latlon::MULTI_LATLON{T}
     "The borders in Cartesian2D CRS"
     cart::MULTI_CART{T}
-    function CountryBorder(admin::String, geom::G, idx::Int) where {T,G<:Union{MULTI_LATLON{T}, POLY_LATLON{T}}}
-        latlon = geom isa MULTI_LATLON ? geom : Multi([geom])
+    function CountryBorder(admin::String, latlon::MULTI_LATLON{T}, valid_polyareas::BitVector; resolution::Int, table_idx::Int) where {T}
+        ngeoms = length(latlon.geoms)
+        sum(valid_polyareas) === ngeoms || error("The number of set bits in the `valid_polyareas` vector must be equivalent to the number of PolyAreas in the `geom` input argument")
         cart = cartesian_geometry(latlon)
-        new{T}(admin, idx, latlon, cart)
+        new{T}(admin, table_idx, valid_polyareas, resolution, latlon, cart)
     end
 end
+function CountryBorder(admin::AbstractString, geom::POLY_LATLON, valid_polyareas = BitVector((true,)); kwargs...)
+    multi = Multi([geom])
+    CountryBorder(String(admin), multi, BitVector(valid_polyareas); kwargs...)
+end
+function CountryBorder(admin::AbstractString, multi::MULTI_LATLON, valid_polyareas = BitVector(ntuple(i -> true, length(multi.geoms))); kwargs...)
+    CountryBorder(String(admin), multi, BitVector(valid_polyareas); kwargs...)
+end
+
+function remove_polyareas!(cb::CountryBorder, idx::Int)
+    (; valid_polyareas, latlon, cart, admin, resolution) = cb
+    ngeoms = length(valid_polyareas)
+    @assert idx ≤ ngeoms "You are trying to remove the $idx-th PolyArea from $(admin) but that country is only composed of $ngeoms PolyAreas for the considered resolution ($(resolution)m)."
+    if !valid_polyareas[idx] 
+        @info "The $idx-th PolyArea in $(admin) has already been removed"
+        return cb
+    end
+    @assert sum(valid_polyareas) > 1 "You can't remove all PolyAreas from a `CountryBorder` object"
+    # We find the idx while accounting for already removed polyareas
+    current_idx = @views sum(valid_polyareas[1:idx])
+    for g in (latlon, cart)
+        deleteat!(g.geoms, current_idx)
+    end
+    valid_polyareas[idx] = false
+    return cb
+end
+function remove_polyareas!(cb::CountryBorder, idxs)
+    for idx in idxs
+        remove_polyareas!(cb, idx)
+    end
+    return cb
+end
+
 
 const GSET{T} = GeometrySet{🌐, LATLON{T}, CountryBorder{T}}
 const SUBDOMAIN{T} = SubDomain{🌐, LATLON{T}, <:GSET{T}}
@@ -45,16 +82,20 @@ cartesian_geometry(multi::Multi{🌐,<:LATLON}) =
 floattype(::CountryBorder{T}) where {T} = T
 floattype(::DOMAIN{T}) where {T} = T
 
-borders(cb::CountryBorder, ::Type{LatLon}) = cb.latlon
-borders(cb::CountryBorder, ::Type{Cartesian}) = cb.cart
-borders(cb::CountryBorder) = borders(cb, LatLon)
+borders(::Type{LatLon}, cb::CountryBorder) = cb.latlon
+borders(::Type{Cartesian}, cb::CountryBorder) = cb.cart
+borders(cb::CountryBorder) = borders(LatLon, cb)
+
+resolution(cb::CountryBorder) = cb.resolution
+resolution(d::GSET) = resolution(element(d, 1))
 
 # Meshes/Base methods overloads #
 Meshes.paramdim(cb::CountryBorder) = paramdim(cb.latlon)
 
 function Meshes.prettyname(d::GSET) 
     T = floattype(d)
-    "GeometrySet{CountryBorder{$T}}"
+    res = resolution(d)
+    "GeometrySet{CountryBorder{$T}}, resolution = $(res)m"
 end
 
 ## IO ##
@@ -65,10 +106,22 @@ end
 
 function Base.show(io::IO, cb::CountryBorder)
     print(io, cb.admin)
+    nskipped = sum(!, cb.valid_polyareas)
+    if nskipped > 0
+        print(io, " ($nskipped skipped)")
+    end
 end
 
 function Base.show(io::IO, mime::MIME"text/plain", cb::CountryBorder)
-    print(io, cb.admin)
-    print(io, ", $(floattype(cb)), ")
-    show(io, mime, cb.latlon)
+    (; admin, valid_polyareas, latlon) = cb
+    print(io, admin)
+    print(io, ", $(floattype(cb)), $(resolution(cb))m")
+    nskipped = sum(!, valid_polyareas)
+    if nskipped > 0
+        print(io, ", $nskipped skipped")
+    end
+    println(io)
+    v = Any["Skipped PolyArea" for _ in 1:length(valid_polyareas)]
+    v[valid_polyareas] = latlon.geoms
+    printelms(io, v)
 end
