@@ -128,4 +128,10 @@ end
     # Show methods
     @test sprint(summary, italy) == "Italy Borders"
     @test contains(sprint(show, MIME"text/plain"(), italy), ", 1 skipped")
+
+    # centroid
+    dmn = extract_countries("italy; spain")
+    c_ll = centroid(LatLon, dmn)
+    c_cart = centroid(dmn)
+    @test c_cart isa Point{<:Cartesian}
 end

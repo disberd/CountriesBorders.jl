@@ -29,9 +29,9 @@ Meshes.centroid(crs::VALID_CRS, cb::CountryBorder) = centroid(borders(crs, cb))
 Meshes.centroid(cb::CountryBorder) = centroid(Cartesian, cb)
 
 # We do this to always use 
-function _centroid_v(d::DOMAIN)
+function _centroid_v(d::DOMAIN{T}) where T
   vector(i) = to(centroid(Cartesian, element(d, i)))
-  volume(i) = measure(element(d, i))
+  volume(i) = measure(borders(Cartesian, element(d, i)))
   n = nelements(d)
   x = vector.(1:n)
   w = volume.(1:n)
@@ -43,8 +43,8 @@ Meshes.centroid(crs::VALID_CRS, d::DOMAIN, i::Int) = centroid(crs, element(d, i)
 Meshes.centroid(d::DOMAIN, i::Int) = centroid(Cartesian, d, i)
 
 # The centroid computation on the domain does it in Cartesian2D, and the optionally transforms this 2D centroid in LatLon directly
-Meshes.centroid(d::DOMAIN) = centroid(Cartesian, d)
-Meshes.centroid(::Type{Cartesian}, d::DOMAIN) = Cartesian2D{WGS84Latest}(_centroid_v(d) |> Tuple) |> Point
+Meshes.centroid(d::DOMAIN{T}) where T = centroid(Cartesian, d)
+Meshes.centroid(::Type{Cartesian}, d::DOMAIN{T}) where T = Cartesian2D{WGS84Latest, Met{T}}(_centroid_v(d) |> Tuple) |> Point
 function Meshes.centroid(::Type{LatLon}, d::DOMAIN)
     v = _centroid_v(d)
     lat = ustrip(v[2]) |> Deg # lat is Y

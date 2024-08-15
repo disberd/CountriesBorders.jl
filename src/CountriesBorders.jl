@@ -11,7 +11,7 @@ using Unitful: Unitful, ustrip
 using PrecompileTools
 using NaturalEarth: NaturalEarth, naturalearth
 using CoordRefSystems
-using CoordRefSystems: Deg
+using CoordRefSystems: Deg, Met
 
 export extract_countries, SKIP_NONCONTINENTAL_EU, SkipFromAdmin, SimpleLatLon, LatLon, Point
 export CountryBorder
