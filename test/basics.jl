@@ -1,5 +1,6 @@
 using CountriesBorders
 using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, get_geotable, extract_plot_coords, borders, remove_polyareas!, floattype, npolyareas
+using CountriesBorders.GeoTablesConversion: POINT_CART
 using Meshes
 using CoordRefSystems
 using Test
@@ -133,5 +134,5 @@ end
     dmn = extract_countries("italy; spain")
     c_ll = centroid(LatLon, dmn)
     c_cart = centroid(dmn)
-    @test c_cart isa Point{<:Cartesian}
+    @test c_cart isa POINT_CART
 end
