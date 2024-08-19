@@ -2,6 +2,7 @@ module CountriesBorders
 
 using GeoTables
 using Meshes
+using Meshes: 🌐, printelms
 using GeoInterface
 using Tables
 using GeoJSON
@@ -9,26 +10,19 @@ using Artifacts
 using Unitful: Unitful, ustrip
 using PrecompileTools
 using NaturalEarth: NaturalEarth, naturalearth
+using CoordRefSystems
+using CoordRefSystems: Deg, Met
 
-export extract_countries, SKIP_NONCONTINENTAL_EU, SkipFromAdmin, SimpleLatLon
+export extract_countries, SKIP_NONCONTINENTAL_EU, SkipFromAdmin, SimpleLatLon, LatLon, Point
+export CountryBorder
 
-module GeoTablesConversion
-    using Meshes
-    using GeoTables
-    using Tables
-    import GeoInterface as GI
-    using CoordRefSystems
-    using Unitful
+include("conversions.jl")
 
-    export SimpleLatLon, SimpleRegion
-
-    include("types.jl")
-    include("conversion_utils.jl")
-end
-using .GeoTablesConversion
-
+const SimpleLatLon = LatLon
+const RegionBorders{T} = Union{CountryBorder{T}, DOMAIN{T}}
 
 include("geotable.jl")
+include("meshes_interface.jl")
 include("skip_polyarea.jl")
 include("implementation.jl")
 include("plot_coordinates.jl")

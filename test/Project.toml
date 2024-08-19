@@ -1,6 +1,7 @@
 [deps]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 CoordRefSystems = "b46f11dc-f210-4604-bfba-323c1ec968cb"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Meshes = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
 PlotlyBase = "a03496cd-edff-5a9b-9e67-9cda94a718b5"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

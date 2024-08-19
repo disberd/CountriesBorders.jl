@@ -1,5 +1,6 @@
 using CountriesBorders
-using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, GeoTablesConversion.geomcolumn, get_geotable, extract_plot_coords
+using CountriesBorders: possible_selector_values, valid_column_names, mergeSkipDict, validate_skipDict, skipall, SkipDict, skipDict, get_geotable, extract_plot_coords, borders, remove_polyareas!, floattype, npolyareas
+using CountriesBorders.GeoTablesConversion: POINT_CART
 using Meshes
 using CoordRefSystems
 using Test
@@ -18,11 +19,11 @@ example3 = extract_countries(;subregion = "*europe; -eastern europe")
     # We test the skip_areas example
 
     included_cities = cities = [
-        SimpleLatLon(41.9, 12.49) # Rome
-        SimpleLatLon(39.217, 9.113) # Cagliari
-        SimpleLatLon(48.864, 2.349) # Paris
-        SimpleLatLon(59.913, 10.738) # Oslo
-    ] .|> Meshes.Point
+        LatLon(41.9, 12.49) # Rome
+        LatLon(39.217, 9.113) # Cagliari
+        LatLon(48.864, 2.349) # Paris
+        LatLon(59.913, 10.738) # Oslo
+    ] .|> Point
 
     excluded_cities = cities = [
         LatLon(37.5, 15.09) # Catania
@@ -38,9 +39,6 @@ example3 = extract_countries(;subregion = "*europe; -eastern europe")
     ])
     @test all(in(dmn_excluded), included_cities)
     @test all(!in(dmn_excluded), excluded_cities)
-
-    # Check wrapping
-    @test SimpleLatLon(41.9, 12.49 + 360) in dmn_excluded
 
     dmn_full = extract_countries("italy; spain; france; norway")
     @test all(in(dmn_full), included_cities)
@@ -61,6 +59,10 @@ valid_column_names()
 
 # Test that extract_countries returns nothing if no matching country is found
 @test extract_countries("IDFSDF") === nothing
+
+# We test that "*" selects all countries
+dmn = extract_countries("*")
+@test length(dmn) == length(parent(dmn))
 
 # skip_polyarea coverage
 sfa1 = SkipFromAdmin("France", :)
@@ -92,46 +94,6 @@ sfb = SkipFromAdmin("France", 1:3)
 merge!(sfa, SkipFromAdmin("France", 2), SkipFromAdmin("France", 3))
 @test sfb.idxs == sfa.idxs
 
-@testset "Conversions" begin
-    ValidUnion = Union{SimpleLatLon, LatLon}
-    function ≈(a::ValidUnion, b::ValidUnion)
-        for name in (:lat, :lon)
-            av = getproperty(a, name) |> ustrip
-            bv = getproperty(b, name) |> ustrip
-            Base.isapprox(av, bv) || false
-        end
-        return true
-    end
-    ≈(a,b) = Base.isapprox(a,b)
-    sll_wgs = SimpleLatLon(10,20)
-    ll_wgs = convert(LatLon{WGS84Latest}, sll_wgs)
-    ll_itrf = convert(LatLon{ITRF{2020}}, sll_wgs)
-    sll_itrf = convert(SimpleLatLon{ITRF{2020}}, ll_itrf)
-    ll_itrf2 = convert(LatLon{ITRF{2020}}, LatLon(10f0,20f0))
-    @test sll_itrf ≈ ll_itrf ≈ ll_itrf2
-    @test sll_itrf ≈ convert(SimpleLatLon{ITRF{2020}}, sll_wgs)
-    rad = 1u"rad"
-    @test SimpleLatLon(90,90) ≈ SimpleLatLon(π/2 * rad, π/2 * rad)
-
-    # Test constructor errors and longitude wrapping
-    @test_throws "between -90° and 90°" SimpleLatLon(180, 2)
-    @test SimpleLatLon(0, 41 + 360).lon |> ustrip ≈ 41
-end
-
-@test_throws "geometry column not found" geomcolumn([:asd, :lol])
-
-@testset "in" begin
-    dmn = extract_countries("italy")
-
-    rome_sll = SimpleLatLon(41.9, 12.49)
-    rome_ll = LatLon(41.9, 12.49)
-    rome_nt1 = (;lat = 41.9, lon = 12.49)
-    rome_nt2 = (;lon = 12.49, lat = 41.9)
-    for p in (rome_sll, rome_ll, rome_nt1, rome_nt2)
-        @test p in dmn
-    end
-end
-
 # We test that 50m resolution has more polygons than the default 110m one
 @test length(get_geotable(;resolution = 50).geometry) > length(get_geotable().geometry)
 
@@ -139,4 +101,39 @@ end
 @testset "Extract plot coords" begin
     dmn = extract_countries("italy")
     @test extract_plot_coords(dmn) isa @NamedTuple{lat::Vector{Float32}, lon::Vector{Float32}}
+    ps = rand(Point, 100; crs = LatLon)
+    @test extract_plot_coords(ps) == extract_plot_coords(coords.(ps))
+
+    # Test that cart also works
+    italy = extract_countries("italy") |> only
+    v1 = extract_plot_coords(italy) 
+    v2 = extract_plot_coords(borders(Cartesian, italy))
+    for s in (:lat, :lon)
+        a1 = getfield(v1, s)
+        a2 = getfield(v2, s)
+        f(x,y) = (isnan(x) && isnan(y)) || x == y
+        @test all(x -> f(x...), zip(a1, a2))
+    end
+end
+
+@testset "Misc coverage" begin
+    italy = extract_countries("italy") |> only
+    @test LatLon(41.9, 12.49) in italy
+    @test npolyareas(italy) == 3
+    remove_polyareas!(italy, 1)
+    @test npolyareas(italy) == 2
+    @test_logs (:info, r"has already been removed") remove_polyareas!(italy, 1)
+
+    @test floattype(italy) == Float32
+
+    # Show methods
+    @test sprint(summary, italy) == "Italy Borders"
+    @test contains(sprint(show, MIME"text/plain"(), italy), ", 1 skipped")
+
+    # centroid
+    dmn = extract_countries("italy; spain")
+    c_ll = centroid(LatLon, dmn)
+    c_cart = centroid(dmn)
+    @test c_cart isa POINT_CART
+    @test centroid(dmn, 1) isa POINT_CART
 end

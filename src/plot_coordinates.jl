@@ -1,9 +1,15 @@
 # Extracting lat/lon coordaintes of the borders
-function extract_plot_coords(sll::SimpleLatLon)
-    (;lat, lon) = sll
+function extract_plot_coords(ll::LATLON)
+    (;lat, lon) = ll
     out = map(Float32 ∘ ustrip, (;lat, lon))
 end
-function extract_plot_coords(v::Vector{<:SimpleLatLon})
+function extract_plot_coords(c::CART)
+    lat = c.y
+    lon = c.x
+    out = map(Float32 ∘ ustrip, (;lat, lon))
+end
+extract_plot_coords(p::VALID_POINT) = extract_plot_coords(coords(p))
+function extract_plot_coords(v::Vector)
     nelem = length(v)
     lat = Vector{Float32}(undef, nelem)
     lon = Vector{Float32}(undef, nelem)
@@ -15,13 +21,13 @@ function extract_plot_coords(v::Vector{<:SimpleLatLon})
     return (;lat, lon)
 end
 
-function extract_plot_coords(ring::Ring{2, <:SimpleLatLon})
+function extract_plot_coords(ring::VALID_RING)
     nelem = nvertices(ring)
     lat = Vector{Float32}(undef, nelem)
     lon = Vector{Float32}(undef, nelem)
     v = vertices(ring)
     for i in eachindex(v, lat, lon)
-        c = coords(v[i]) |> extract_plot_coords
+        c = extract_plot_coords(v[i])
         lat[i] = c.lat
         lon[i] = c.lon
     end
@@ -32,6 +38,7 @@ function extract_plot_coords(ring::Ring{2, <:SimpleLatLon})
 end
 
 geom_iterable(pa::Union{Multi, PolyArea}) = rings(pa)
+geom_iterable(cb::CountryBorder) = rings(borders(cb))
 geom_iterable(d::Domain) = d
 
 """
@@ -44,7 +51,7 @@ and `lon` contain the concateneated lat/lon values of each ring separated by
 `NaN32` values. This is done to allow plotting multiple separated borders in a
 single trace.
 """
-function extract_plot_coords(inp::SimpleRegion)
+function extract_plot_coords(inp::Union{Multi, PolyArea, RegionBorders})
     iterable = geom_iterable(inp)
     length(iterable) == 1 && return extract_plot_coords(first(iterable))
 	lon = Float32[]
