@@ -135,4 +135,5 @@ end
     c_ll = centroid(LatLon, dmn)
     c_cart = centroid(dmn)
     @test c_cart isa POINT_CART
+    @test centroid(dmn, 1) isa POINT_CART
 end
