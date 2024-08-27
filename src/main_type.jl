@@ -48,7 +48,7 @@ struct CountryBorder{T} <: Geometry{🌐,LATLON{T}}
     function CountryBorder(admin::String, latlon::MULTI_LATLON{T}, valid_polyareas::BitVector; resolution::Int, table_idx::Int) where {T}
         ngeoms = length(latlon.geoms)
         sum(valid_polyareas) === ngeoms || error("The number of set bits in the `valid_polyareas` vector must be equivalent to the number of PolyAreas in the `geom` input argument")
-        cart = change_geometry(latlon)
+        cart = cartesian_geometry(latlon)
         new{T}(admin, table_idx, valid_polyareas, resolution, latlon, cart)
     end
 end
@@ -89,8 +89,8 @@ const SUBDOMAIN{T} = SubDomain{🌐, LATLON{T}, <:GSET{T}}
 const DOMAIN{T} = Union{GSET{T}, SUBDOMAIN{T}}
 
 """
-    change_geometry(poly::PolyArea{🌐,<:LATLON})
-    change_geometry(multi::Multi{🌐,<:LATLON})
+    cartesian_geometry(poly::PolyArea{🌐,<:LATLON})
+    cartesian_geometry(multi::Multi{🌐,<:LATLON})
 
 Convert geometries from LatLon to Cartesian coordinate systems.
 
@@ -101,16 +101,16 @@ Convert geometries from LatLon to Cartesian coordinate systems.
 ## Returns
 - `PolyArea` or `Multi`: The converted geometry in Cartesian coordinate system.
 """
-function change_geometry(poly::PolyArea{🌐,<:LATLON})
+function cartesian_geometry(poly::PolyArea{🌐,<:LATLON})
     map(rings(poly)) do r
         map(Meshes.flat, vertices(r)) |> Ring
     end |> splat(PolyArea)
 end
-change_geometry(multi::Multi{🌐,<:LATLON}) = map(cartesian_geometry, parent(multi)) |> Multi
+cartesian_geometry(multi::Multi{🌐,<:LATLON}) = map(cartesian_geometry, parent(multi)) |> Multi
 
 """
-    change_geometry(poly::PolyArea{𝔼{2},<:CART})
-    change_geometry(multi::Multi{𝔼{2},<:CART})
+    latlon_geometry(poly::PolyArea{𝔼{2},<:CART})
+    latlon_geometry(multi::Multi{𝔼{2},<:CART})
 
 Convert geometries from Cartesian to LatLon coordinate systems.
 
@@ -121,11 +121,11 @@ Convert geometries from Cartesian to LatLon coordinate systems.
 ## Returns
 - `PolyArea` or `Multi`: The converted geometry in LatLon coordinate system.
 """
-function change_geometry(poly::PolyArea{𝔼{2},<:CART})
+function latlon_geometry(poly::PolyArea{𝔼{2},<:CART})
     map(rings(poly)) do r
         map(vertices(r)) do v
             LatLon{WGS84Latest}(coords(v).y |> ustrip, coords(v).x |> ustrip) |> Point
         end |> Ring
     end |> splat(PolyArea)
 end
-change_geometry(multi::Multi{𝔼{2},<:CART}) = map(change_geometry, parent(multi)) |> Multi
+latlon_geometry(multi::Multi{𝔼{2},<:CART}) = map(latlon_geometry, parent(multi)) |> Multi
