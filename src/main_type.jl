@@ -89,6 +89,9 @@ end
 # longitude ≈ 180° to -180° in case the rest of the points have mostly negative
 # longitude   
 function fix_lon_wrap!(ring::RING_LATLON{T}) where T
+    @static if pkgversion(CoordRefSystems) ≥ v"0.12.1"
+        return nothing # CoordRefSystems.jl v0.12.1 fixed the underlying issue so we do nothing
+    end
     verts = vertices(ring)
     get_lon(ll::LATLON) = ll.lon
     get_lon(p::Point) = coords(p) |> get_lon
